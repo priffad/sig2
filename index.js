@@ -16,17 +16,15 @@ const connectDB = async ()=>{
 }
 
 app.use(express.json());
-const authRoutes = require('./routes/authRoutes');
-const categoryRoutes = require('./routes/articleRoutes');
-const placeRoutes = require('./routes/eventRoutes');
+
 const commentRoutes = require('./routes/commentRoutes');
 const articleRoutes = require('./routes/articleRoutes');
 const eventRoutes = require('./routes/eventRoutes');
 
 // ...kode setup Express, Middleware, dll.
-app.use('/api/auth', authRoutes);
-app.use('/api/categories', categoryRoutes);
-app.use('/api/places', placeRoutes);
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/categories', require('./routes/categoryRoutes'));
+app.use('/api/places', require('./routes/placeRoutes'));
 app.use('/api/comments', commentRoutes);
 app.use('/api/articles', articleRoutes);
 app.use('/api/events', eventRoutes);
