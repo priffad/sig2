@@ -16,7 +16,7 @@ const connectDB = async ()=>{
 }
 
 app.use(express.json());
-const authRoutes = require('./routes/commentRoutes');
+const authRoutes = require('./routes/authRoutes');
 const categoryRoutes = require('./routes/articleRoutes');
 const placeRoutes = require('./routes/eventRoutes');
 const commentRoutes = require('./routes/commentRoutes');
