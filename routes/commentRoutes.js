@@ -1,7 +1,7 @@
 const express = require('express');
 const Comment = require('../models/Comment');
 const Place = require('../models/Place');
-const authMiddleware = require('../middleware/authMiddleware');
+
 const router = express.Router();
 
 // Get comments for a specific place
@@ -11,11 +11,11 @@ router.get('/:placeId', async (req, res) => {
 });
 
 // Create a new comment
-router.post('/',authMiddleware, async (req, res) => {
+router.post('/', async (req, res) => {
     const { name, content, placeId } = req.body;
 
-    const place = await Place.findById(placeId);
-    if (!place) return res.status(404).send('Place not found');
+    // const place = await Place.findById(placeId);
+    // if (!place) return res.status(404).send('Place not found');
 
     let comment = new Comment({
         name,
