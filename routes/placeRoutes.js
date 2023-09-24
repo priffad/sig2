@@ -1,8 +1,11 @@
 const express = require('express');
 const Place = require('../models/Place');
+const express = require('express');
+const router = express.Router();
+const Comment = require('../models/Comment');
 const authMiddleware = require('../middleware/authMiddleware');
 
-const router = express.Router();
+
 
 // Get all places
 router.get('/', async (req, res) => {
@@ -56,5 +59,35 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 
     res.send(place);
 });
+
+
+// Endpoint untuk mencari tempat dengan jumlah komentar terbanyak
+router.get('/places-with-most-comments', async (req, res) => {
+  try {
+    const placesWithMostComments = await Comment.aggregate([
+      {
+        $group: {
+          _id: '$place', // Mengelompokkan komentar berdasarkan tempat
+          totalComments: { $sum: 1 } // Menghitung jumlah komentar
+        }
+      },
+      {
+        $sort: { totalComments: -1 } // Mengurutkan berdasarkan jumlah komentar secara turun
+      }
+    ]);
+
+    const topPlaceId = placesWithMostComments[0]._id; // Mengambil ID tempat dengan komentar terbanyak
+
+    // Mengambil data tempat dengan ID yang memiliki komentar terbanyak
+    const topPlace = await Place.findById(topPlaceId);
+
+    res.json(topPlace);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+module.exports = router;
+
 
 module.exports = router;
