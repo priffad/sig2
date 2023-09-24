@@ -12,7 +12,7 @@ router.get('/:placeId', async (req, res) => {
 
 // Create a new comment
 router.post('/', async (req, res) => {
-    const { name, content, placeId } = req.body;
+    const { name, content, place} = req.body;
 
     // const place = await Place.findById(placeId);
     // if (!place) return res.status(404).send('Place not found');
@@ -20,7 +20,7 @@ router.post('/', async (req, res) => {
     let comment = new Comment({
         name,
         content,
-        place: placeId
+        place
     });
 
     try {
