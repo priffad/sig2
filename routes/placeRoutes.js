@@ -85,8 +85,68 @@ router.get('/places-with-most-comments', async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
-
+// Endpoint untuk mencari 5 tempat dengan jumlah komentar terbanyak
+router.get('/top-5-places-with-most-comments', async (req, res) => {
+    try {
+      const placesWithMostComments = await Comment.aggregate([
+        {
+          $group: {
+            _id: '$place', // Mengelompokkan komentar berdasarkan tempat
+            totalComments: { $sum: 1 } // Menghitung jumlah komentar
+          }
+        },
+        {
+          $sort: { totalComments: -1 } // Mengurutkan berdasarkan jumlah komentar secara turun
+        },
+        {
+          $limit: 5 // Mengambil 5 hasil teratas
+        }
+      ]);
+  
+      const topPlaceIds = placesWithMostComments.map(item => item._id); // Mengambil ID tempat dari hasil agregasi
+  
+      // Mengambil data tempat dengan ID yang memiliki komentar terbanyak
+      const topPlaces = await Place.find({ _id: { $in: topPlaceIds } });
+  
+      res.json(topPlaces);
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+// Endpoint untuk mendapatkan tempat dengan urutan terbanyak
+router.get('/places-with-most-comments/:limit', async (req, res) => {
+    const limit = parseInt(req.params.limit);
+  
+    try {
+      const placesWithMostComments = await Comment.aggregate([
+        {
+          $group: {
+            _id: '$place', // Mengelompokkan komentar berdasarkan tempat
+            totalComments: { $sum: 1 } // Menghitung jumlah komentar
+          }
+        },
+        {
+          $sort: { totalComments: -1 } // Mengurutkan berdasarkan jumlah komentar secara turun
+        },
+        {
+          $limit: limit // Mengambil hasil sesuai dengan limit yang ditentukan
+        }
+      ]);
+  
+      const topPlaceIds = placesWithMostComments.map(item => item._id); // Mengambil ID tempat dari hasil agregasi
+  
+      // Mengambil data tempat dengan ID yang memiliki komentar terbanyak
+      const topPlaces = await Place.find({ _id: { $in: topPlaceIds } });
+  
+      res.json(topPlaces);
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+    
 module.exports = router;
 
 
-module.exports = router;
+
+
+

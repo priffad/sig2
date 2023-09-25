@@ -17,7 +17,11 @@ mongoose.connect(process.env.MONGO_URL, {
 mongoose.connection.on("connected", () => {
   console.log("Connected to MongoDB");
 
-  app.use(cors());
+  app.use(cors({
+    origin: ["http://frontend-url.com", "http://another-frontend-url.com"], // Ganti dengan alamat frontend Anda
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+}));
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
  
