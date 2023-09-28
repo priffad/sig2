@@ -13,6 +13,8 @@ const path = require('path');
 const baseUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/`;
 const multer = require('multer');
 
+const AWS = require("aws-sdk");
+const s3 = new AWS.S3();
 
 // Get all places
 router.get('/', async (req, res) => {
@@ -23,26 +25,38 @@ router.get('/', async (req, res) => {
 // Create a new place (Admin only)
 router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
   const { name, category, description, lat, lng } = req.body;
-
-  const imagePath = `places/${Date.now()}-${req.file.originalname}`;
+  const imageFile = req.file;
   
   // Upload to S3
-  try {
-    await fs.promises.writeFile(imagePath, req.file.buffer);
-    
-    let place = new Place({
-        name,
-        category,
-        description,
-        image: imagePath,  // Menyimpan path dari S3
-        lat,
-        lng
-    });
+  const s3Params = {
+      Bucket: process.env.BUCKET,
+      Key: Date.now() + '-' + imageFile.originalname,
+      Body: imageFile.buffer,
+      ContentType: imageFile.mimetype
+  };
 
-    place = await place.save();
-    res.send(place);
+  let imageURL;
+  try {
+      const s3Response = await s3.upload(s3Params).promise();
+      imageURL = s3Response.Location;
+  } catch (s3Error) {
+      return res.status(500).send(s3Error.message);
+  }
+
+  let place = new Place({
+      name,
+      category,
+      description,
+      image: imageURL,
+      lat,
+      lng
+  });
+
+  try {
+      place = await place.save();
+      res.send(place);
   } catch (error) {
-    res.status(400).send(error.message);
+      res.status(400).send(error.message);
   }
 });
 
