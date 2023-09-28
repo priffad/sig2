@@ -5,6 +5,8 @@ const Comment = require('../models/Comment');
 const authMiddleware = require('../middleware/authMiddleware');
 
 const fs = require('@cyclic.sh/s3fs');
+const multer = require('multer');
+
 const storage = multer.memoryStorage();
 
 const upload = multer({ storage: storage });
