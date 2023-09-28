@@ -3,26 +3,16 @@ const Place = require('../models/Place');
 const router = express.Router();
 const Comment = require('../models/Comment');
 const authMiddleware = require('../middleware/authMiddleware');
-const fs = require('fs');
+
+const fs = require('@cyclic.sh/s3fs');
+const storage = multer.memoryStorage();
+
+const upload = multer({ storage: storage });
+
 const path = require('path');
 const baseUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/`;
 const multer = require('multer');
 
-const storage = multer.diskStorage({
-  destination: function(req, file, cb) {
-      const dir = './uploads/';
-      if (!fs.existsSync(dir)) {
-          fs.mkdirSync(dir, { recursive: true });
-      }
-      cb(null, dir);
-  },
-  filename: function(req, file, cb) {
-      cb(null, Date.now() + '-' + file.originalname);
-  }
-});
-
-
-const upload = multer({ storage: storage });
 
 // Get all places
 router.get('/', async (req, res) => {
@@ -33,30 +23,31 @@ router.get('/', async (req, res) => {
 // Create a new place (Admin only)
 router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
   const { name, category, description, lat, lng } = req.body;
-  
-  // Tambahkan cek untuk memastikan file ada
-  if (!req.file) {
-      return res.status(400).send('No file uploaded.');
-  }
 
-  let imagePath = baseUrl + path.basename(req.file.path);
+  const imagePath = `places/${Date.now()}-${req.file.originalname}`;
   
-  let place = new Place({
-      name,
-      category,
-      description,
-      image: imagePath,  // Ubah bagian ini
-      lat,
-      lng
-  });
-
+  // Upload to S3
   try {
-      place = await place.save();
-      res.send(place);
+    await fs.promises.writeFile(imagePath, req.file.buffer);
+    
+    let place = new Place({
+        name,
+        category,
+        description,
+        image: imagePath,  // Menyimpan path dari S3
+        lat,
+        lng
+    });
+
+    place = await place.save();
+    res.send(place);
   } catch (error) {
-      res.status(400).send(error.message);
+    res.status(400).send(error.message);
   }
 });
+
+
+ 
 
 
 // Update a place (Admin only)
