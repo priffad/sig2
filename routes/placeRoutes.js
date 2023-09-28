@@ -8,16 +8,13 @@ const Place = require('../models/Place');
 const Comment = require('../models/Comment');
 const authMiddleware = require('../middleware/authMiddleware');
 
-const app = express();
 const s3 = new AWS.S3();
-
-app.use(bodyParser.json());
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 // AWS S3 Routes
-app.get('/s3/*', async (req, res) => {
+router.get('/s3/*', async (req, res) => {
     let filename = req.path.slice(4); 
 
     try {
@@ -39,7 +36,7 @@ app.get('/s3/*', async (req, res) => {
     }
 });
 
-app.put('/s3/*', async (req, res) => {
+router.put('/s3/*', async (req, res) => {
     let filename = req.path.slice(4);
 
     await s3.putObject({
@@ -52,7 +49,7 @@ app.put('/s3/*', async (req, res) => {
     res.send('ok').end();
 });
 
-app.delete('/s3/*', async (req, res) => {
+router.delete('/s3/*', async (req, res) => {
     let filename = req.path.slice(4);
 
     await s3.deleteObject({
@@ -65,12 +62,12 @@ app.delete('/s3/*', async (req, res) => {
 });
 
 // Places Routes
-app.get('/places', async (req, res) => {
+router.get('/places', async (req, res) => {
     const places = await Place.find().populate('category');
     res.send(places);
 });
 
-app.post('/places', authMiddleware, upload.single('image'), async (req, res) => {
+router.post('/places', authMiddleware, upload.single('image'), async (req, res) => {
     const { name, category, description, lat, lng } = req.body;
     const imageFile = req.file;
 
@@ -106,7 +103,7 @@ app.post('/places', authMiddleware, upload.single('image'), async (req, res) => 
     }
 });
 
-app.put('/places/:id', authMiddleware, upload.single('image'), async (req, res) => {
+router.put('/places/:id', authMiddleware, upload.single('image'), async (req, res) => {
     const { name, category, description, lat, lng } = req.body;
     const image = req.file ? req.file.path : undefined;
 
@@ -121,7 +118,7 @@ app.put('/places/:id', authMiddleware, upload.single('image'), async (req, res) 
     res.send(place);
 });
 
-app.delete('/places/:id', authMiddleware, async (req, res) => {
+router.delete('/places/:id', authMiddleware, async (req, res) => {
     const place = await Place.findByIdAndRemove(req.params.id);
 
     if (!place) return res.status(404).send('The place with the given ID was not found.');
