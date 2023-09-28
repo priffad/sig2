@@ -62,12 +62,12 @@ router.delete('/s3/*', async (req, res) => {
 });
 
 // Places Routes
-router.get('/places', async (req, res) => {
+router.get('/', async (req, res) => {
     const places = await Place.find().populate('category');
     res.send(places);
 });
 
-router.post('/places', authMiddleware, upload.single('image'), async (req, res) => {
+router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
     const { name, category, description, lat, lng } = req.body;
     const imageFile = req.file;
 
@@ -103,7 +103,7 @@ router.post('/places', authMiddleware, upload.single('image'), async (req, res) 
     }
 });
 
-router.put('/places/:id', authMiddleware, upload.single('image'), async (req, res) => {
+router.put('/:id', authMiddleware, upload.single('image'), async (req, res) => {
     const { name, category, description, lat, lng } = req.body;
     const image = req.file ? req.file.path : undefined;
 
