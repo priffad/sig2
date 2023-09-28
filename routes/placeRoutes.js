@@ -4,7 +4,18 @@ const router = express.Router();
 const Comment = require('../models/Comment');
 const authMiddleware = require('../middleware/authMiddleware');
 
+const multer = require('multer');
 
+const storage = multer.diskStorage({
+    destination: function(req, file, cb) {
+        cb(null, './uploads/');
+    },
+    filename: function(req, file, cb) {
+        cb(null, Date.now() + '-' + file.originalname);
+    }
+});
+
+const upload = multer({ storage: storage });
 
 // Get all places
 router.get('/', async (req, res) => {
@@ -13,17 +24,18 @@ router.get('/', async (req, res) => {
 });
 
 // Create a new place (Admin only)
-router.post('/', authMiddleware, async (req, res) => {
-    const { name, category, description, image, lat, lng } = req.body;
+router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
+  const { name, category, description, lat, lng } = req.body;
+  const image = req.file.path;
 
-    let place = new Place({
-        name,
-        category,
-        description,
-        image,
-        lat,
-        lng
-    });
+  let place = new Place({
+      name,
+      category,
+      description,
+      image,
+      lat,
+      lng
+  });
 
     try {
         place = await place.save();
@@ -34,16 +46,16 @@ router.post('/', authMiddleware, async (req, res) => {
 });
 
 // Update a place (Admin only)
-router.put('/:id', authMiddleware, async (req, res) => {
-    const { name, category, description, image, lat, lng } = req.body;
-    const place = await Place.findByIdAndUpdate(req.params.id, {
-        name,
-        category,
-        description,
-        image,
-        lat,
-        lng
-    }, { new: true });
+router.put('/:id', authMiddleware, upload.single('image'), async (req, res) => {
+  const { name, category, description, lat, lng } = req.body;
+  const image = req.file ? req.file.path : undefined;
+
+  const updateObject = { name, category, description, lat, lng };
+  if (image) {
+      updateObject.image = image;
+  }
+
+  const place = await Place.findByIdAndUpdate(req.params.id, updateObject, { new: true });
 
     if (!place) return res.status(404).send('The place with the given ID was not found.');
 
