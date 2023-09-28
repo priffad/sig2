@@ -1,91 +1,128 @@
 const express = require('express');
+const bodyParser = require('body-parser');
+const multer = require('multer');
+const AWS = require("aws-sdk");
 const Place = require('../models/Place');
-const router = express.Router();
 const Comment = require('../models/Comment');
 const authMiddleware = require('../middleware/authMiddleware');
 
-const fs = require('@cyclic.sh/s3fs');
-const multer = require('multer');
-
-const storage = multer.memoryStorage();
-
-const upload = multer({ storage: storage });
-
-
-const AWS = require("aws-sdk");
+const app = express();
 const s3 = new AWS.S3();
 
-// Get all places
-router.get('/', async (req, res) => {
+app.use(bodyParser.json());
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+
+// AWS S3 Routes
+app.get('/s3/*', async (req, res) => {
+    let filename = req.path.slice(4); 
+
+    try {
+        let s3File = await s3.getObject({
+            Bucket: process.env.BUCKET,
+            Key: filename,
+        }).promise();
+
+        res.set('Content-type', s3File.ContentType);
+        res.send(s3File.Body.toString()).end();
+    } catch (error) {
+        if (error.code === 'NoSuchKey') {
+            console.log(`No such key ${filename}`);
+            res.sendStatus(404).end();
+        } else {
+            console.log(error);
+            res.sendStatus(500).end();
+        }
+    }
+});
+
+app.put('/s3/*', async (req, res) => {
+    let filename = req.path.slice(4);
+
+    await s3.putObject({
+        Body: JSON.stringify(req.body),
+        Bucket: process.env.BUCKET,
+        Key: filename,
+    }).promise();
+
+    res.set('Content-type', 'text/plain');
+    res.send('ok').end();
+});
+
+app.delete('/s3/*', async (req, res) => {
+    let filename = req.path.slice(4);
+
+    await s3.deleteObject({
+        Bucket: process.env.BUCKET,
+        Key: filename,
+    }).promise();
+
+    res.set('Content-type', 'text/plain');
+    res.send('ok').end();
+});
+
+// Places Routes
+app.get('/places', async (req, res) => {
     const places = await Place.find().populate('category');
     res.send(places);
 });
 
-// Create a new place (Admin only)
-router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
-  const { name, category, description, lat, lng } = req.body;
-  const imageFile = req.file;
-  
-  // Upload to S3
-  const s3Params = {
-      Bucket: process.env.CYCLIC_BUCKET_NAME,
-      Key: Date.now() + '-' + imageFile.originalname,
-      Body: imageFile.buffer,
-      ContentType: imageFile.mimetype
-  };
+app.post('/places', authMiddleware, upload.single('image'), async (req, res) => {
+    const { name, category, description, lat, lng } = req.body;
+    const imageFile = req.file;
 
-  let imageURL;
-  try {
-      const s3Response = await s3.upload(s3Params).promise();
-      imageURL = s3Response.Location;
-  } catch (s3Error) {
-      return res.status(500).send(s3Error.message);
-  }
+    const s3Params = {
+        Bucket: process.env.CYCLIC_BUCKET_NAME,
+        Key: Date.now() + '-' + imageFile.originalname,
+        Body: imageFile.buffer,
+        ContentType: imageFile.mimetype
+    };
 
-  let place = new Place({
-      name,
-      category,
-      description,
-      image: imageURL,
-      lat,
-      lng
-  });
+    let imageURL;
+    try {
+        const s3Response = await s3.upload(s3Params).promise();
+        imageURL = s3Response.Location;
+    } catch (s3Error) {
+        return res.status(500).send(s3Error.message);
+    }
 
-  try {
-      place = await place.save();
-      res.send(place);
-  } catch (error) {
-      res.status(400).send(error.message);
-  }
+    let place = new Place({
+        name,
+        category,
+        description,
+        image: imageURL,
+        lat,
+        lng
+    });
+
+    try {
+        place = await place.save();
+        res.send(place);
+    } catch (error) {
+        res.status(400).send(error.message);
+    }
 });
 
+app.put('/places/:id', authMiddleware, upload.single('image'), async (req, res) => {
+    const { name, category, description, lat, lng } = req.body;
+    const image = req.file ? req.file.path : undefined;
 
- 
+    const updateObject = { name, category, description, lat, lng };
+    if (image) {
+        updateObject.image = image;
+    }
 
-
-// Update a place (Admin only)
-router.put('/:id', authMiddleware, upload.single('image'), async (req, res) => {
-  const { name, category, description, lat, lng } = req.body;
-  const image = req.file ? req.file.path : undefined;
-
-  const updateObject = { name, category, description, lat, lng };
-  if (image) {
-      updateObject.image = image;
-  }
-
-  const place = await Place.findByIdAndUpdate(req.params.id, updateObject, { new: true });
+    const place = await Place.findByIdAndUpdate(req.params.id, updateObject, { new: true });
 
     if (!place) return res.status(404).send('The place with the given ID was not found.');
-
     res.send(place);
 });
 
-// Delete a place (Admin only)
-router.delete('/:id', authMiddleware, async (req, res) => {
+app.delete('/places/:id', authMiddleware, async (req, res) => {
     const place = await Place.findByIdAndRemove(req.params.id);
 
     if (!place) return res.status(404).send('The place with the given ID was not found.');
-
     res.send(place);
 });
 
