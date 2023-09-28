@@ -9,8 +9,7 @@ const storage = multer.memoryStorage();
 
 const upload = multer({ storage: storage });
 
-const path = require('path');
-const baseUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/`;
+
 const multer = require('multer');
 
 const AWS = require("aws-sdk");
@@ -29,7 +28,7 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
   
   // Upload to S3
   const s3Params = {
-      Bucket: process.env.BUCKET,
+      Bucket: process.env.CYCLIC_BUCKET_NAME,
       Key: Date.now() + '-' + imageFile.originalname,
       Body: imageFile.buffer,
       ContentType: imageFile.mimetype
