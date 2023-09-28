@@ -3,17 +3,24 @@ const Place = require('../models/Place');
 const router = express.Router();
 const Comment = require('../models/Comment');
 const authMiddleware = require('../middleware/authMiddleware');
-
+const fs = require('fs');
+const path = require('path');
+const baseUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/`;
 const multer = require('multer');
 
 const storage = multer.diskStorage({
-    destination: function(req, file, cb) {
-        cb(null, './uploads/');
-    },
-    filename: function(req, file, cb) {
-        cb(null, Date.now() + '-' + file.originalname);
-    }
+  destination: function(req, file, cb) {
+      const dir = './uploads/';
+      if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true });
+      }
+      cb(null, dir);
+  },
+  filename: function(req, file, cb) {
+      cb(null, Date.now() + '-' + file.originalname);
+  }
 });
+
 
 const upload = multer({ storage: storage });
 
@@ -26,24 +33,31 @@ router.get('/', async (req, res) => {
 // Create a new place (Admin only)
 router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
   const { name, category, description, lat, lng } = req.body;
-  const image = req.file.path;
+  
+  // Tambahkan cek untuk memastikan file ada
+  if (!req.file) {
+      return res.status(400).send('No file uploaded.');
+  }
 
+  let imagePath = baseUrl + path.basename(req.file.path);
+  
   let place = new Place({
       name,
       category,
       description,
-      image,
+      image: imagePath,  // Ubah bagian ini
       lat,
       lng
   });
 
-    try {
-        place = await place.save();
-        res.send(place);
-    } catch (error) {
-        res.status(400).send(error.message);
-    }
+  try {
+      place = await place.save();
+      res.send(place);
+  } catch (error) {
+      res.status(400).send(error.message);
+  }
 });
+
 
 // Update a place (Admin only)
 router.put('/:id', authMiddleware, upload.single('image'), async (req, res) => {
