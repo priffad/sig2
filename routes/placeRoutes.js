@@ -10,9 +10,11 @@ const authMiddleware = require('../middleware/authMiddleware');
 
 
 AWS.config.update({
-    accessKeyId: process.env.AWS_ACCESS_KEY,
-    secretAccessKey: process.env.AWS_SECRET_KEY,
-    region: 'us-west-2' // Anda mungkin perlu mengubah ini sesuai dengan region S3 bucket Anda
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.MY_AWS_ACCESS_KEY_ID,
+  // Jika Anda menggunakan STS
+  // sessionToken: process.env.AWS_SESSION_TOKEN, 
+  region: process.env.AWS_REGION || 'us-west-2'
 });
 
 
@@ -73,18 +75,22 @@ router.delete('/s3/*', async (req, res) => {
 const s3 = new AWS.S3();
 
 router.get('/', async (req, res) => {
-    const places = await Place.find().populate('category');
-    for (let place of places) {
-        const key = place.image.split('/').pop();
-        place.image = s3.getSignedUrl('getObject', {
-            Bucket: process.env.CYCLIC_BUCKET_NAME,
-            Key: key,
-            Expires: 3600 // durasi validitas URL (1 jam dalam detik)
-        });
-    }
-    res.send(places);
+  try {
+      const places = await Place.find().populate('category');
+      for (let place of places) {
+          const key = place.image.split('/').pop();
+          place.image = s3.getSignedUrl('getObject', {
+              Bucket: process.env.CYCLIC_BUCKET_NAME,
+              Key: key,
+              Expires: 3600 // durasi validitas URL (1 jam dalam detik)
+          });
+      }
+      res.send(places);
+  } catch (error) {
+      console.error('Error fetching places:', error);
+      res.status(500).send('Internal Server Error');
+  }
 });
-
 router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
     const { name, category, description, lat, lng } = req.body;
     const imageFile = req.file;
