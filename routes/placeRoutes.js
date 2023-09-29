@@ -7,7 +7,7 @@ const AWS = require("aws-sdk");
 const Place = require('../models/Place');
 const Comment = require('../models/Comment');
 const authMiddleware = require('../middleware/authMiddleware');
-const AWS = require('aws-sdk');
+
 
 AWS.config.update({
     accessKeyId: process.env.AWS_ACCESS_KEY,
