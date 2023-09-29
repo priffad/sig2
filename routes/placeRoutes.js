@@ -7,8 +7,15 @@ const AWS = require("aws-sdk");
 const Place = require('../models/Place');
 const Comment = require('../models/Comment');
 const authMiddleware = require('../middleware/authMiddleware');
+const AWS = require('aws-sdk');
 
-const s3 = new AWS.S3();
+AWS.config.update({
+    accessKeyId: process.env.AWS_ACCESS_KEY,
+    secretAccessKey: process.env.AWS_SECRET_KEY,
+    region: 'us-west-2' // Anda mungkin perlu mengubah ini sesuai dengan region S3 bucket Anda
+});
+
+
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -63,8 +70,18 @@ router.delete('/s3/*', async (req, res) => {
 });
 
 // Places Routes
+const s3 = new AWS.S3();
+
 router.get('/', async (req, res) => {
     const places = await Place.find().populate('category');
+    for (let place of places) {
+        const key = place.image.split('/').pop();
+        place.image = s3.getSignedUrl('getObject', {
+            Bucket: process.env.CYCLIC_BUCKET_NAME,
+            Key: key,
+            Expires: 3600 // durasi validitas URL (1 jam dalam detik)
+        });
+    }
     res.send(places);
 });
 
