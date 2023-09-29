@@ -11,7 +11,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 
 AWS.config.update({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.MY_AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.MY_AWS_SECRET_ACCESS_KEY,
   // Jika Anda menggunakan STS
   // sessionToken: process.env.AWS_SESSION_TOKEN, 
   region: process.env.AWS_REGION || 'us-west-2'
