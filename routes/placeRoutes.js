@@ -24,7 +24,8 @@ router.get('/s3/*', async (req, res) => {
         }).promise();
 
         res.set('Content-type', s3File.ContentType);
-        res.send(s3File.Body.toString()).end();
+        res.send(s3File.Body);
+
     } catch (error) {
         if (error.code === 'NoSuchKey') {
             console.log(`No such key ${filename}`);
