@@ -4,9 +4,12 @@ const router = express.Router();
 const Comment = require('../models/Comment');
 const authMiddleware = require('../middleware/authMiddleware');
 const path = require('path');
+require('dotenv').config();
+const AWS = require('aws-sdk');
+const multerS3 = require('multer-s3');
 
 const multer = require('multer');
-router.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+const s3 = new AWS.S3();
 
 const storage = multer.diskStorage({
     destination: function(req, file, cb) {
@@ -16,8 +19,28 @@ const storage = multer.diskStorage({
         cb(null, Date.now() + '-' + file.originalname);
     }
 });
+router.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+AWS.config.update({
+  accessKeyId: process.env.AWS_ACCESS_KEY,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  region: process.env.AWS_REGION // misalnya: 'us-west-1'
+});
+const upload = multer({
+  storage: multerS3({
+      s3: s3,
+      bucket: process.env.AWS_BUCKET_NAME,
+      contentType: multerS3.AUTO_CONTENT_TYPE,
+      acl: 'public-read',
+      key: function (req, file, cb) {
+          cb(null, Date.now().toString() + '-' + file.originalname);
+      }
+  })
+});
 
-const upload = multer({ storage: storage });
+
+
+
+// const upload = multer({ storage: storage });
 
 // Get all places
 router.get('/', async (req, res) => {
@@ -32,7 +55,8 @@ router.get('/', async (req, res) => {
 // Create a new place (Admin only)
 router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
   const { name, category, description, address, lat, lng } = req.body;
-  const image = req.file.path;
+
+  const image = req.file.location; // URL dari gambar yang di-upload ke S3
 
   let place = new Place({
       name,
