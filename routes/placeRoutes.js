@@ -21,9 +21,9 @@ const storage = multer.diskStorage({
 });
 router.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 AWS.config.update({
-  accessKeyId: process.env.AWS_ACCESS_KEY,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  region: process.env.AWS_REGION // misalnya: 'us-west-1'
+  accessKeyId: process.env.MY_AWS_ACCESS_KEY,
+  secretAccessKey: process.env.MY_AWS_SECRET_ACCESS_KEY,
+  region: process.env.MY_AWS_REGION
 });
 const upload = multer({
   storage: multerS3({
