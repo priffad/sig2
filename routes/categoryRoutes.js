@@ -1,33 +1,33 @@
+
+const { userAuthenticate } = require('../middleware/auth');
+
 const express = require('express');
 const Category = require('../models/Category');
-const authMiddleware = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-// Get all categories
-router.get('/', async (req, res) => {
-    const categories = await Category.find();
-    res.send(categories);
-});
-
-// Create a new category (Admin only)
-router.post('/', authMiddleware, async (req, res) => {
-    const { name } = req.body;
-
-    let category = new Category({
-        name
-    });
-
+router.post('/', userAuthenticate, async (req, res) => {
     try {
-        category = await category.save();
-        res.send(category);
+        const category = new Category(req.body);
+        await category.save();
+        res.status(201).send(category);
     } catch (error) {
-        res.status(400).send(error.message);
+        res.status(400).send(error);
     }
 });
 
+router.get('/', async (req, res) => {
+    try {
+        const categories = await Category.find();
+        res.send(categories);
+    } catch (error) {
+        res.status(500).send(error);
+    }
+});
+
+
 // Update a category (Admin only)
-router.put('/:id', authMiddleware, async (req, res) => {
+router.put('/:id', userAuthenticate, async (req, res) => {
     const { name } = req.body;
     const category = await Category.findByIdAndUpdate(req.params.id, { name }, { new: true });
 
@@ -37,7 +37,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
 });
 
 // Delete a category (Admin only)
-router.delete('/:id', authMiddleware, async (req, res) => {
+router.delete('/:id', userAuthenticate, async (req, res) => {
     const category = await Category.findByIdAndRemove(req.params.id);
 
     if (!category) return res.status(404).send('The category with the given ID was not found.');

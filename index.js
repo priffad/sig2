@@ -1,48 +1,52 @@
-
-const express = require("express");
-const mongoose = require("mongoose");
-const dotenv = require("dotenv");
-const cors = require("cors");
-
+const express = require('express');
+const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
+const cors = require('cors');
+const Grid = require('gridfs-stream');
+const dotenv = require('dotenv');
 
 dotenv.config();
 
 const app = express();
 
-mongoose.connect(process.env.MONGO_URL, {
+app.use(bodyParser.json());
+app.use(cors({
+  origin: ["http://localhost:3001", "http://localhost:5555", "http://localhost:57474"],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true,
+}));
+
+// Connect to MongoDB
+mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
 
-mongoose.connection.on("connected", () => {
+// Once connected to the DB, initialize our gfs instance
+let gfs;
+const conn = mongoose.connection;
+conn.once('open', () => {
+  gfs = Grid(conn.db, mongoose.mongo);
+  gfs.collection('uploads');
   console.log("Connected to MongoDB");
-
-  app.use(cors({
-    origin: ["http://localhost:3001", "http://localhost:3000/"], // Ganti dengan alamat frontend Anda
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
-}));
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
- 
-  app.use('/uploads', express.static('uploads'));
-
-
-  app.use('/api/auth', require('./routes/authRoutes'));
-  app.use('/api/categories', require('./routes/categoryRoutes'));
-  app.use('/api/places', require('./routes/placeRoutes'));
-  app.use('/api/comments', require('./routes/commentRoutes'));
-  app.use('/api/events', require('./routes/eventRoutes'));
-  app.use('/api/article', require('./routes/articleRoutes'));
-  
-
-  const PORT = process.env.PORT || 3000;
-
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-  });
 });
 
-mongoose.connection.on("error", (err) => {
-  console.log("Error connecting to MongoDB", err);
+// Import routes
+const userRoutes = require('./routes/userRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
+const placeRoutes = require('./routes/placeRoutes');
+const reviewRoutes = require('./routes/reviewRoutes');
+
+// Use routes
+app.use('/api/users', userRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/places', placeRoutes);
+app.use('/api/reviews', reviewRoutes);
+
+// Start the server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
