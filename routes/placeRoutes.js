@@ -55,13 +55,19 @@ res.send(placesTransformed);
 // READ (Place tunggal berdasarkan ID)
 router.get('/:id', async (req, res) => {
     try {
-        const place = await Place.findById(req.params.id);
-        if (!place) {
-            res.status(404).send('Place not found');
-        } else {
-            res.send(place);
-        }
-    } catch (error) {
+        // Di endpoint untuk mendapatkan semua places
+ const places = await Place.find();
+ const placesTransformed = places.map(place => {
+     return {
+         ...place._doc,
+         image: {
+             data: place.image.data.toString('base64'),
+             contentType: place.image.contentType
+         }
+     };
+ });
+ res.send(placesTransformed);
+}catch (error) {
         res.status(500).send(error);
     }
 });
