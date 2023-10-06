@@ -13,18 +13,13 @@ router.post('/register', async (req, res) => {
   let user = await User.findOne({ username });
   if (user) return res.status(400).send({ error: 'Username already exists' });
 
-  user = new User({ username, password });
-
-  // Hash password before saving
-  const salt = await bcrypt.genSalt(10);
-  user.password = await bcrypt.hash(password, salt);
-
   try {
+    const user = new User(req.body);
     await user.save();
-    res.status(201).send({ message: 'Registered successfully' });
-  } catch (error) {
+    res.status(201).send(user);
+} catch (error) {
     res.status(400).send(error);
-  }
+}
 });
 
 // Login
