@@ -6,7 +6,7 @@ const { userAuthenticate } = require('../middleware/auth');
 const router = express.Router();
 
 // Get reviews for a place
-router.get('/place/:placeId', async (req, res) => {
+router.get('/place/:id', async (req, res) => {
     try {
         const reviews = await Review.find({ place: req.params.placeId });
         res.send(reviews);
@@ -16,7 +16,7 @@ router.get('/place/:placeId', async (req, res) => {
 });
 
 // Add a review for a place
-router.post('/place/:placeId', userAuthenticate, async (req, res) => {
+router.post('/place/:id', userAuthenticate, async (req, res) => {
     const review = new Review({
         name: req.body.name,
         content : req.body.content,
