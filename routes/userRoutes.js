@@ -29,17 +29,21 @@ router.post('/register', async (req, res) => {
 
 // Login
 router.post('/login', async (req, res) => {
-  const { username, password } = req.body;
-  const user = await User.findOne({ username });
-
-  if (!user) return res.status(400).send({ error: 'Invalid credentials' });
-
-  const isMatch = await bcrypt.compare(password, user.password);
-
-  if (!isMatch) return res.status(400).send({ error: 'Invalid credentials' });
-
-  const token = jwt.sign({ _id: user._id, username: user.username }, process.env.SECRET_KEY);
-  res.send({ token });
+  try {
+    const { username, password } = req.body;
+    const user = await user.findOne({ username });
+    if (!user) {
+        return res.status(400).send({ error: 'Invalid login credentials' });
+    }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+        return res.status(400).send({ error: 'Invalid login credentials' });
+    }
+    const token = jwt.sign({ _id: user._id }, process.env.SECRET_KEY);
+    res.send( token );
+} catch (error) {
+    res.status(500).send(error);
+}
 });
 
 // You can add more routes (e.g., updating profile, etc.)
