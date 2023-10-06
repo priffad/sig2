@@ -18,7 +18,8 @@ router.get('/place/:placeId', async (req, res) => {
 // Add a review for a place
 router.post('/place/:placeId', userAuthenticate, async (req, res) => {
     const review = new Review({
-        ...req.body,
+        name: req.body.name,
+        content : req.body.content,
         place: req.params.placeId
     });
     try {
