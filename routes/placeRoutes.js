@@ -147,5 +147,28 @@ router.delete('/:id', userAuthenticate, async (req, res) => {
         res.status(500).send(error);
     }
 });
+// Endpoint untuk menyukai sebuah place
+router.patch('/:placeId/like', userAuthenticate, async (req, res) => {
+    try {
+        const place = await Place.findById(req.params.placeId);
+
+        // Cek apakah place ditemukan
+        if (!place) {
+            return res.status(404).send('Place not found');
+        }
+
+        // Cek apakah user sudah pernah menyukai place ini
+        if (!place.likes.includes(req.user._id)) { // Asumsikan req.user._id adalah ID dari pengguna yang saat ini login
+            place.likes.push(req.user._id);
+            await place.save();
+            res.send(place);
+        } else {
+            res.status(400).send('You have already liked this place');
+        }
+
+    } catch (error) {
+        res.status(500).send(error);
+    }
+});
 
 module.exports = router;
