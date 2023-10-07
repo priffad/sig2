@@ -12,10 +12,10 @@ const placeSchema = new mongoose.Schema({
     },
     description: String,
     address: String,
-    image: {
-        data: Buffer,  // Ini akan menyimpan gambar dalam bentuk binary
-        contentType: String  // Ini akan menyimpan tipe konten dari gambar (e.g., image/jpeg)
-    },
+    images: [{
+        data: Buffer, 
+        contentType: String
+    }],
     lat: Number,
     lng: Number,
     likes: [mongoose.Schema.Types.ObjectId],  // Array dari User IDs
