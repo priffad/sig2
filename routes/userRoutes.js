@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
+const { userAuthenticate } = require('../middleware/auth');
 const router = express.Router();
 
 // Register new user
@@ -41,6 +42,28 @@ router.post('/login', async (req, res) => {
 }
 });
 
-// You can add more routes (e.g., updating profile, etc.)
+router.patch('/changepassword',userAuthenticate,  async (req, res) => {
+    try {
+        const { oldPassword, newPassword } = req.body;
+
+        // Verifikasi pengguna dengan token yang diberikan
+        const user = await User.findById(req.user._id); // diasumsikan userAuthenticate middleware menambahkan ID pengguna ke `req.user`
+
+        // Periksa apakah oldPassword valid
+        const isMatch = await bcrypt.compare(oldPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).send({ error: 'Current password is incorrect' });
+        }
+
+        // Jika oldPassword valid, ganti dengan newPassword
+        user.password = await bcrypt.hash(newPassword, 8);
+        await user.save();
+
+        res.send({ message: 'Password updated successfully' });
+    } catch (error) {
+        res.status(500).send(error);
+    }
+});
+
 
 module.exports = router;
