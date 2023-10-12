@@ -9,7 +9,15 @@ const userSchema = new mongoose.Schema({
     password: {
         type: String,
         required: true
-    }
+    },
+    bookmarkedArticles: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Article'
+    }],
+    bookmarkedEvents: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Event'
+    }]
 });
 
 userSchema.pre('save', async function(next) {

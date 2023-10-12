@@ -37,6 +37,9 @@ const adminRoutes = require('./routes/adminRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const placeRoutes = require('./routes/placeRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
+const articleRoutes = require('./routes/articleRoutes');
+const eventRoutes = require('./routes/eventRoutes');
+const sliderRoutes = require('./routes/sliderRoutes');
 
 // Use routes
 app.use('/api/users', userRoutes);
@@ -44,6 +47,9 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/places', placeRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/events', eventRoutes);
+app.use('/api/articles', articleRoutes);
+app.use('/api/sliders', sliderRoutes);
 
 // Start the server
 const PORT = process.env.PORT || 3000;

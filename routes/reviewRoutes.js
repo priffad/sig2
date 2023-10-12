@@ -5,7 +5,7 @@ const { userAuthenticate } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Get reviews for a place
+
 router.get('/place/:placeId', async (req, res) => {
     try {
         const reviews = await Review.find({ place: req.params.placeId });
@@ -15,7 +15,7 @@ router.get('/place/:placeId', async (req, res) => {
     }
 });
 
-// Add a review for a place
+
 router.post('/place/:placeId', userAuthenticate, async (req, res) => {
     const review = new Review({
         ...req.body,
@@ -29,6 +29,6 @@ router.post('/place/:placeId', userAuthenticate, async (req, res) => {
     }
 });
 
-// ... other CRUD operations for Review ...
+
 
 module.exports = router;
