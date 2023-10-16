@@ -7,7 +7,7 @@ const router = express.Router();
 const upload = multer();
 
 
-router.post('/', adminCheck, upload.single('image'), async (req, res) => {
+router.post('/', userAuthenticate, upload.single('image'), async (req, res) => {
     const article = new Event({
         ...req.body,
         image: {
@@ -46,7 +46,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // UPDATE event by ID
-router.patch('/:id', adminCheck, upload.single('image'), async (req, res) => {
+router.patch('/:id', userAuthenticate, upload.single('image'), async (req, res) => {
     const updates = Object.keys(req.body);
     try {
         const event = await Event.findById(req.params.id);
@@ -66,7 +66,7 @@ router.patch('/:id', adminCheck, upload.single('image'), async (req, res) => {
 });
 
 // DELETE event by ID
-router.delete('/:id', adminCheck, async (req, res) => {
+router.delete('/:id', userAuthenticate, async (req, res) => {
     try {
         const event = await Event.findByIdAndDelete(req.params.id);
         if (!event) {
