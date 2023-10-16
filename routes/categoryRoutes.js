@@ -34,12 +34,25 @@ router.get('/:categoryId/places', async (req, res) => {
         }
 
         const places = await Place.find({ category: category._id }).populate('category');
-        res.send(places);
+        
+        const transformedPlaces = places.map(place => {
+            return {
+                ...place._doc,
+                images: place.images.map(image => ({
+                    data: image.data.toString('base64'),
+                    contentType: image.contentType
+                }))
+            };
+        });
+
+        res.send(transformedPlaces);
 
     } catch (error) {
         res.status(500).send(error);
     }
 });
+
+
 router.put('/:id', userAuthenticate, async (req, res) => {
     const { name } = req.body;
     const category = await Category.findByIdAndUpdate(req.params.id, { name }, { new: true });
