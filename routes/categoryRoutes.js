@@ -3,7 +3,7 @@ const { userAuthenticate } = require('../middleware/auth');
 
 const express = require('express');
 const Category = require('../models/Category');
-
+const Place = require('../models/Place');
 const router = express.Router();
 
 router.post('/', userAuthenticate, async (req, res) => {
@@ -26,7 +26,20 @@ router.get('/', async (req, res) => {
 });
 
 
-// Update a category (Admin only)
+router.get('/:categoryId/places', async (req, res) => {
+    try {
+        const category = await Category.findById(req.params.categoryId);
+        if (!category) {
+            return res.status(404).send('Category not found');
+        }
+
+        const places = await Place.find({ category: category._id }).populate('category');
+        res.send(places);
+
+    } catch (error) {
+        res.status(500).send(error);
+    }
+});
 router.put('/:id', userAuthenticate, async (req, res) => {
     const { name } = req.body;
     const category = await Category.findByIdAndUpdate(req.params.id, { name }, { new: true });
