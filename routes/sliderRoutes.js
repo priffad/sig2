@@ -24,14 +24,27 @@ router.post('/', userAuthenticate, upload.single('image'), async (req, res) => {
 });
 
 // GET all sliders
+
 router.get('/', async (req, res) => {
     try {
-        const sliders = await Slider.find();
-        res.status(200).send(sliders);
+       
+const sliders = await Slider.find();
+const slidersTransformed = sliders.map(slider => {
+    return {
+        ...slider._doc,
+        image: {
+            data: slider.image.data.toString('base64'),
+            contentType: slider.image.contentType
+        }
+    };
+});
+res.send(slidersTransformed);
+
     } catch (error) {
         res.status(500).send(error);
     }
 });
+
 
 // GET specific slider by ID
 router.get('/:id', async (req, res) => {
