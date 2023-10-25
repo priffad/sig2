@@ -58,8 +58,38 @@ router.get('/', async (req, res) => {
     }
 });
 
+router.get('/top-liked', async (req, res) => {
+    try {
+        const topLikedPlaces = await Place.find()
+            .sort({ likes: -1 }) 
+            .limit(5);           
 
-// READ (Place tunggal berdasarkan ID)
+        const transformedPlaces = topLikedPlaces.map(place => {
+            const imagesTransformed = place.images.map(image => ({
+                data: image.data.toString('base64'),
+                contentType: image.contentType
+            }));
+            
+            return {
+                ...place._doc,
+                images: imagesTransformed
+            };
+        });
+
+        res.send(transformedPlaces);
+    } catch (error) {
+        res.status(500).send(error);
+    }
+});
+router.get('/my-liked-places', userAuthenticate, async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const likedPlaces = await Place.find({ likes: userId }).select('name'); // Asumsikan Anda hanya ingin nama place
+        res.send(likedPlaces);
+    } catch (error) {
+        res.status(500).send(error);
+    }
+});
 router.get('/:id', async (req, res) => {
     try {
         const place = await Place.findById(req.params.id);
@@ -82,8 +112,6 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-
-// UPDATE
 router.patch('/:id', userAuthenticate, upload.array('image', 4), async (req, res) => {
     const allowedUpdates = ['name', 'category', 'description', 'address', 'lat', 'lng'];
     const updates = Object.keys(req.body);
@@ -100,8 +128,6 @@ router.patch('/:id', userAuthenticate, upload.array('image', 4), async (req, res
         if (!place) {
             return res.status(404).send('Place not found');
         }
-
-        // Update setiap field yang disertakan dalam request
         updates.forEach(update => place[update] = req.body[update]);
 
         if (req.files) {
@@ -109,8 +135,7 @@ router.patch('/:id', userAuthenticate, upload.array('image', 4), async (req, res
                 data: file.buffer,
                 contentType: file.mimetype
             }));
-            
-            // Mengganti gambar yang sudah ada dengan yang baru
+    
             place.images = placeImages;
         }
 
@@ -136,7 +161,6 @@ router.delete('/:id', userAuthenticate, async (req, res) => {
         res.status(500).send(error);
     }
 });
-// Endpoint untuk menyukai sebuah place
 router.patch('/:placeId/like', userAuthenticate, async (req, res) => {
     try {
         const place = await Place.findById(req.params.placeId);
@@ -145,26 +169,29 @@ router.patch('/:placeId/like', userAuthenticate, async (req, res) => {
             return res.status(404).send('Place not found');
         }
 
-        if (!place.likes.includes(req.user._id)) { 
+        const index = place.likes.indexOf(req.user._id);
+
+        // Jika belum menyukai tempat tersebut, tambahkan ID 
+        if (index === -1) {
             place.likes.push(req.user._id);
             await place.save();
-            res.send(place);
-        } else {
-            res.status(400).send('You have already liked this place');
+            res.send({ status: 'liked', place });
+        } 
+        // Jika sudah menyukai tempat tersebut, hapus ID 
+        else {
+            place.likes.splice(index, 1);
+            await place.save();
+            res.send({ status: 'unliked', place });
         }
 
     } catch (error) {
         res.status(500).send(error);
     }
 });
-router.get('/my-liked-places', userAuthenticate, async (req, res) => {
-    try {
-        const userId = req.user._id;
-        const likedPlaces = await Place.find({ likes: userId }).select('name'); // Asumsikan Anda hanya ingin nama place
-        res.send(likedPlaces);
-    } catch (error) {
-        res.status(500).send(error);
-    }
-});
+
+
+
+
+
 
 module.exports = router;
