@@ -9,7 +9,6 @@ const Place = require('../models/Place');  // Sesuaikan path sesuai kebutuhan
 const router = express.Router();
 const upload = multer();
 
-// CREATE
 
 router.post('/', userAuthenticate, upload.array('image', 4), async (req, res) => {
     try {
@@ -147,8 +146,6 @@ router.patch('/:id', userAuthenticate, upload.array('image', 4), async (req, res
     }
 });
 
-
-// DELETE
 router.delete('/:id', userAuthenticate, async (req, res) => {
     try {
         const place = await Place.findByIdAndDelete(req.params.id);
@@ -166,28 +163,28 @@ router.patch('/:placeId/like', userAuthenticate, async (req, res) => {
         const place = await Place.findById(req.params.placeId);
 
         if (!place) {
-            return res.status(404).send('Place not found');
+            return res.status(404).json({ message: 'Place not found' });
         }
 
         const index = place.likes.indexOf(req.user._id);
-
-        // Jika belum menyukai tempat tersebut, tambahkan ID 
         if (index === -1) {
             place.likes.push(req.user._id);
-            await place.save();
-            res.send({ status: 'liked', place });
-        } 
-        // Jika sudah menyukai tempat tersebut, hapus ID 
-        else {
+        } else {
             place.likes.splice(index, 1);
-            await place.save();
-            res.send({ status: 'unliked', place });
         }
+        await place.save();
+        res.status(200).json({ 
+            status: index === -1 ? 'liked' : 'unliked', 
+            likes: place.likes.length, 
+            place: place 
+        });
 
     } catch (error) {
-        res.status(500).send(error);
+        res.status(500).json({ message: 'Failed to like the place', error: error.message });
     }
 });
+
+
 
 
 

@@ -23,7 +23,6 @@ router.post('/', userAuthenticate, upload.single('image'), async (req, res) => {
     }
 });
 
-// GET all sliders
 
 router.get('/', async (req, res) => {
     try {
@@ -46,7 +45,6 @@ res.send(slidersTransformed);
 });
 
 
-// GET specific slider by ID
 router.get('/:id', async (req, res) => {
     try {
         const slider = await Slider.findById(req.params.id);
@@ -59,7 +57,7 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// UPDATE slider by ID
+
 router.patch('/:id', userAuthenticate, upload.single('image'), async (req, res) => {
     const updates = Object.keys(req.body);
     try {
@@ -79,7 +77,7 @@ router.patch('/:id', userAuthenticate, upload.single('image'), async (req, res) 
     }
 });
 
-// DELETE slider by ID
+
 router.delete('/slider/:id', userAuthenticate, async (req, res) => {
     try {
         const slider = await Slider.findByIdAndDelete(req.params.id);
