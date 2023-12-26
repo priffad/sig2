@@ -83,12 +83,24 @@ router.get('/top-liked', async (req, res) => {
 router.get('/my-liked-places', userAuthenticate, async (req, res) => {
     try {
         const userId = req.user._id;
-        const likedPlaces = await Place.find({ likes: userId }).select('name'); // Asumsikan Anda hanya ingin nama place
-        res.send(likedPlaces);
+        const likedPlaces = await Place.find({ likes: userId });
+
+        const transformedPlaces = likedPlaces.map(place => {
+            return {
+                ...place._doc,
+                images: place.images.map(image => ({
+                    data: image.data.toString('base64'),
+                    contentType: image.contentType
+                }))
+            };
+        });
+
+        res.send(transformedPlaces);
     } catch (error) {
         res.status(500).send(error);
     }
 });
+
 router.get('/:id', async (req, res) => {
     try {
         const place = await Place.findById(req.params.id);
