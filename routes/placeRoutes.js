@@ -157,19 +157,6 @@ router.patch('/:id', userAuthenticate, upload.array('image', 4), async (req, res
         res.status(500).send(error);
     }
 });
-
-router.delete('/:id', userAuthenticate, async (req, res) => {
-    try {
-        const place = await Place.findByIdAndDelete(req.params.id);
-        if (!place) {
-            res.status(404).send('Place not found');
-        } else {
-            res.send(place);
-        }
-    } catch (error) {
-        res.status(500).send(error);
-    }
-});
 router.patch('/:id', userAuthenticate, upload.array('image', 4), async (req, res) => {
     try {
         const { id } = req.params;
@@ -198,6 +185,19 @@ router.patch('/:id', userAuthenticate, upload.array('image', 4), async (req, res
 
         await place.save();
         res.send(place);
+    } catch (error) {
+        res.status(500).send(error);
+    }
+});
+
+router.delete('/:id', userAuthenticate, async (req, res) => {
+    try {
+        const place = await Place.findByIdAndDelete(req.params.id);
+        if (!place) {
+            res.status(404).send('Place not found');
+        } else {
+            res.send(place);
+        }
     } catch (error) {
         res.status(500).send(error);
     }
