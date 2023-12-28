@@ -157,38 +157,7 @@ router.patch('/:id', userAuthenticate, upload.array('image', 4), async (req, res
         res.status(500).send(error);
     }
 });
-router.patch('/:id', userAuthenticate, upload.array('image', 4), async (req, res) => {
-    try {
-        const { id } = req.params;
-        const updates = req.body;
-        const allowedUpdates = ['name', 'category', 'description', 'address', 'lat', 'lng'];
-        const isValidOperation = Object.keys(updates).every(update => allowedUpdates.includes(update));
 
-        if (!isValidOperation) {
-            return res.status(400).send({ error: 'Invalid updates!' });
-        }
-
-        const place = await Place.findById(id);
-        if (!place) {
-            return res.status(404).send('Place not found');
-        }
-
-        Object.keys(updates).forEach(update => place[update] = updates[update]);
-
-        if (req.files && req.files.length > 0) {
-            const placeImages = req.files.map(file => ({
-                data: file.buffer,
-                contentType: file.mimetype
-            }));
-            place.images = placeImages; 
-        }
-
-        await place.save();
-        res.send(place);
-    } catch (error) {
-        res.status(500).send(error);
-    }
-});
 
 router.delete('/:id', userAuthenticate, async (req, res) => {
     try {
