@@ -22,7 +22,7 @@ router.post('/', userAuthenticate, upload.single('image'), async (req, res) => {
         res.status(500).send(error);
     }
 });
-// GET all articles
+
 router.get('/', async (req, res) => {
     try {
         const articles = await Article.find();
@@ -32,7 +32,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-// GET specific article by ID
+
 router.get('/:id', async (req, res) => {
     try {
         const article = await Article.findById(req.params.id);
@@ -52,7 +52,7 @@ router.get('/titles', async (req, res) => {
         res.status(500).send(error);
     }
 });
-// UPDATE article by ID
+
 router.patch('/:id', userAuthenticate, upload.single('image'), async (req, res) => {
     const updates = Object.keys(req.body);
     try {
@@ -73,7 +73,7 @@ router.patch('/:id', userAuthenticate, upload.single('image'), async (req, res) 
 });
 
 module.exports = router;
-// DELETE article by ID
+
 router.delete('/:id', userAuthenticate, async (req, res) => {
     try {
         const article = await Article.findByIdAndDelete(req.params.id);
