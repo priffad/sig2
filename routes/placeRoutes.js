@@ -170,7 +170,7 @@ router.delete('/:id', userAuthenticate, async (req, res) => {
         res.status(500).send(error);
     }
 });
-router.patch('/edit/:id', userAuthenticate, upload.array('image', 4), async (req, res) => {
+router.patch('/:id', userAuthenticate, upload.array('image', 4), async (req, res) => {
     try {
         const { id } = req.params;
         const updates = req.body;
