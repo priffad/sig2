@@ -164,46 +164,60 @@ router.get('/:id', async (req, res) => {
 //         res.status(500).send(error);
 //     }
 // });
+router.delete('/:placeId/images/:imageId', userAuthenticate, async (req, res) => {
+    try {
+        const place = await Place.findById(req.params.placeId);
+        if (!place) {
+            return res.status(404).send({ error: 'Place not found.' });
+        }
 
-router.patch('/:id', userAuthenticate, upload.array('image', 4), async (req, res) => {
+        // Mungkin tambahkan pengecekan hak akses pengguna di sini
+
+        await place.removeImage(req.params.imageId);
+        res.status(200).send({ message: 'Image removed successfully.' });
+    } catch (error) {
+        res.status(500).send({ error: error.message });
+    }
+});
+
+
+router.put('/:id', userAuthenticate, upload.array('image', 4), async (req, res) => {
     try {
         const place = await Place.findById(req.params.id);
         if (!place) {
             return res.status(404).send('Place not found');
         }
 
-        // Update place fields
-        const updates = req.body;
-        Object.keys(updates).forEach(key => {
-            if (key !== 'deletedImages') {
-                place[key] = updates[key];
-            }
-        });
+        // Update fields
+        place.name = req.body.name || place.name;
+        place.category = req.body.category || place.category;
+        place.description = req.body.description || place.description;
+        place.address = req.body.address || place.address;
+        place.lat = req.body.lat || place.lat;
+        place.lng = req.body.lng || place.lng;
 
-        // Handle deleted images
-        if (req.body.deletedImages) {
-            const deletedImages = JSON.parse(req.body.deletedImages); // Asumsikan format JSON
-            deletedImages.forEach(async (imagePath) => {
-                await deleteImage(imagePath);
-                place.images = place.images.filter(img => img.path !== imagePath);
-            });
+        // Menghapus gambar yang ditentukan
+        if (req.body.imagesToDelete) {
+            const imagesToDelete = req.body.imagesToDelete.split(','); // Anggap ini sebagai ID gambar yang harus dihapus
+            place.images = place.images.filter(image => !imagesToDelete.includes(image._id.toString()));
         }
 
-        // Handle new images
-        if (req.files) {
-            const placeImages = req.files.map(file => ({
+        // Menambahkan gambar baru
+        if (req.files.length > 0) {
+            const newImages = req.files.map(file => ({
                 data: file.buffer,
                 contentType: file.mimetype
             }));
-            place.images = place.images.concat(placeImages);
+            place.images.push(...newImages);
         }
 
         await place.save();
-        res.send(place);
+        res.status(200).send(place);
     } catch (error) {
         res.status(500).send(error);
     }
 });
+
 
 router.delete('/:id', userAuthenticate, async (req, res) => {
     try {
