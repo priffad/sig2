@@ -7,7 +7,9 @@ const multer = require('multer');
 const Place = require('../models/Place');  // Sesuaikan path sesuai kebutuhan
 
 const router = express.Router();
-const upload = multer();
+// Konfigurasi Multer untuk menyimpan file di memori
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 
 router.post('/', userAuthenticate, upload.array('image', 4), async (req, res) => {
@@ -35,7 +37,6 @@ router.post('/', userAuthenticate, upload.array('image', 4), async (req, res) =>
 });
 
 
-// READ (Semua places)
 router.get('/', async (req, res) => {
     try {
         const places = await Place.find();
@@ -123,40 +124,40 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-router.patch('/:id', userAuthenticate, upload.array('image', 4), async (req, res) => {
+router.patch('/:id', userAuthenticate, upload.array('images', 4), async (req, res) => {
     const allowedUpdates = ['name', 'category', 'description', 'address', 'lat', 'lng'];
     const updates = Object.keys(req.body);
-    
-    const isValidOperation = updates.every(update => allowedUpdates.includes(update));
 
+    const isValidOperation = updates.every(update => allowedUpdates.includes(update));
     if (!isValidOperation) {
         return res.status(400).send({ error: 'Invalid updates!' });
     }
 
     try {
         const place = await Place.findById(req.params.id);
-        
         if (!place) {
             return res.status(404).send('Place not found');
         }
-        updates.forEach(update => place[update] = req.body[update]);
+
+        updates.forEach(update => {
+            place[update] = req.body[update];
+        });
 
         if (req.files) {
             const placeImages = req.files.map(file => ({
                 data: file.buffer,
                 contentType: file.mimetype
             }));
-    
-            place.images = placeImages;
+            place.images.push(...placeImages);
         }
 
         await place.save();
-        
         res.send(place);
     } catch (error) {
         res.status(500).send(error);
     }
 });
+
 
 
 router.delete('/:id', userAuthenticate, async (req, res) => {
