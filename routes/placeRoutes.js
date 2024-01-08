@@ -124,10 +124,10 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-router.patch('/:id', userAuthenticate, upload.array('images', 4), async (req, res) => {
+router.patch('/:id', userAuthenticate, upload.array('image', 4), async (req, res) => {
     const allowedUpdates = ['name', 'category', 'description', 'address', 'lat', 'lng'];
     const updates = Object.keys(req.body);
-
+    
     const isValidOperation = updates.every(update => allowedUpdates.includes(update));
     if (!isValidOperation) {
         return res.status(400).send({ error: 'Invalid updates!' });
@@ -148,7 +148,7 @@ router.patch('/:id', userAuthenticate, upload.array('images', 4), async (req, re
                 data: file.buffer,
                 contentType: file.mimetype
             }));
-            place.images.push(...placeImages);
+            place.images = place.images.concat(placeImages);
         }
 
         await place.save();
