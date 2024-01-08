@@ -11,6 +11,13 @@ const router = express.Router();
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
+async function deleteImage(imagePath) {
+    try {
+        fs.unlinkSync(path.join(__dirname, '..', imagePath)); // Sesuaikan path sesuai struktur proyek Anda
+    } catch (error) {
+        console.error(`Error during file deletion: ${error.message}`);
+    }
+}
 
 router.post('/', userAuthenticate, upload.array('image', 4), async (req, res) => {
     try {
@@ -124,25 +131,65 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-router.patch('/:id', userAuthenticate, upload.array('image', 4), async (req, res) => {
-    const allowedUpdates = ['name', 'category', 'description', 'address', 'lat', 'lng'];
-    const updates = Object.keys(req.body);
+// router.patch('/:id', userAuthenticate, upload.array('image', 4), async (req, res) => {
+//     const allowedUpdates = ['name', 'category', 'description', 'address', 'lat', 'lng'];
+//     const updates = Object.keys(req.body);
     
-    const isValidOperation = updates.every(update => allowedUpdates.includes(update));
-    if (!isValidOperation) {
-        return res.status(400).send({ error: 'Invalid updates!' });
-    }
+//     const isValidOperation = updates.every(update => allowedUpdates.includes(update));
+//     if (!isValidOperation) {
+//         return res.status(400).send({ error: 'Invalid updates!' });
+//     }
 
+//     try {
+//         const place = await Place.findById(req.params.id);
+//         if (!place) {
+//             return res.status(404).send('Place not found');
+//         }
+
+//         updates.forEach(update => {
+//             place[update] = req.body[update];
+//         });
+
+//         if (req.files) {
+//             const placeImages = req.files.map(file => ({
+//                 data: file.buffer,
+//                 contentType: file.mimetype
+//             }));
+//             place.images = place.images.concat(placeImages);
+//         }
+
+//         await place.save();
+//         res.send(place);
+//     } catch (error) {
+//         res.status(500).send(error);
+//     }
+// });
+
+router.patch('/:id', userAuthenticate, upload.array('image', 4), async (req, res) => {
     try {
         const place = await Place.findById(req.params.id);
         if (!place) {
             return res.status(404).send('Place not found');
         }
 
-        updates.forEach(update => {
-            place[update] = req.body[update];
+        // Update place fields
+        const updates = req.body;
+        Object.keys(updates).forEach(key => {
+            if (key !== 'deletedImages') {
+                place[key] = updates[key];
+            }
         });
 
+        // Handle deleted images
+        if (req.body.deletedImages) {
+            const deletedImages = JSON.parse(req.body.deletedImages); // Asumsikan format JSON
+            deletedImages.forEach(async (imagePath) => {
+                await deleteImage(imagePath);
+                place.images = place.images.filter(img => img.path !== imagePath);
+            });
+        }
+
+        // Handle new images
         if (req.files) {
             const placeImages = req.files.map(file => ({
                 data: file.buffer,
@@ -157,8 +204,6 @@ router.patch('/:id', userAuthenticate, upload.array('image', 4), async (req, res
         res.status(500).send(error);
     }
 });
-
-
 
 router.delete('/:id', userAuthenticate, async (req, res) => {
     try {
