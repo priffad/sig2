@@ -164,31 +164,16 @@ router.get('/:id', async (req, res) => {
 //         res.status(500).send(error);
 //     }
 // });
-router.delete('/:placeId/images/:imageId', userAuthenticate, async (req, res) => {
-    try {
-        const place = await Place.findById(req.params.placeId);
-        if (!place) {
-            return res.status(404).send({ error: 'Place not found.' });
-        }
-
-        // Mungkin tambahkan pengecekan hak akses pengguna di sini
-
-        await place.removeImage(req.params.imageId);
-        res.status(200).send({ message: 'Image removed successfully.' });
-    } catch (error) {
-        res.status(500).send({ error: error.message });
-    }
-});
-
-
+// Route untuk mengedit data tempat, termasuk mengganti gambar
 router.put('/:id', userAuthenticate, upload.array('image', 4), async (req, res) => {
     try {
         const place = await Place.findById(req.params.id);
+
         if (!place) {
             return res.status(404).send('Place not found');
         }
 
-        // Update fields
+        // Update data tempat
         place.name = req.body.name || place.name;
         place.category = req.body.category || place.category;
         place.description = req.body.description || place.description;
@@ -196,19 +181,16 @@ router.put('/:id', userAuthenticate, upload.array('image', 4), async (req, res) 
         place.lat = req.body.lat || place.lat;
         place.lng = req.body.lng || place.lng;
 
-        if (req.files) {
-            const newImages = req.files.map(file => ({
+        // Hanya ganti gambar jika ada gambar baru yang diupload
+        if (req.files && req.files.length > 0) {
+            const placeImages = req.files.map(file => ({
                 data: file.buffer,
                 contentType: file.mimetype
             }));
-            place.images.push(...newImages);
-        }
 
-        // Handle deleted images
-        if (req.body.deleteImages) {
-            const imagesToDelete = req.body.deleteImages.split(",");
-            place.images = place.images.filter(image => !imagesToDelete.includes(image._id.toString()));
-            // Additionally, remove images from storage if needed
+            // Anda bisa memilih untuk menambah atau mengganti gambar yang ada
+            // Untuk mengganti, gunakan kode di bawah ini:
+            place.images = placeImages;
         }
 
         await place.save();
@@ -217,6 +199,7 @@ router.put('/:id', userAuthenticate, upload.array('image', 4), async (req, res) 
         res.status(500).send(error);
     }
 });
+
 
 
 router.delete('/:id', userAuthenticate, async (req, res) => {
