@@ -181,16 +181,18 @@ router.put('/:id', userAuthenticate, upload.array('image', 4), async (req, res) 
         place.lat = req.body.lat || place.lat;
         place.lng = req.body.lng || place.lng;
 
-        // Hanya ganti gambar jika ada gambar baru yang diupload
-        if (req.files && req.files.length > 0) {
-            const placeImages = req.files.map(file => ({
-                data: file.buffer,
-                contentType: file.mimetype
-            }));
-
-            // Anda bisa memilih untuk menambah atau mengganti gambar yang ada
-            // Untuk mengganti, gunakan kode di bawah ini:
-            place.images = placeImages;
+        // Ganti gambar tertentu
+        if (req.files && req.files.length > 0 && req.body.imageIndexes) {
+            const imageIndexes = req.body.imageIndexes.split(',').map(index => parseInt(index.trim()));
+            
+            imageIndexes.forEach((index, i) => {
+                if (index >= 0 && index < place.images.length && i < req.files.length) {
+                    place.images[index] = {
+                        data: req.files[i].buffer,
+                        contentType: req.files[i].mimetype
+                    };
+                }
+            });
         }
 
         await place.save();
