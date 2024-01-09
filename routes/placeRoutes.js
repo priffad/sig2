@@ -131,49 +131,14 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// router.patch('/:id', userAuthenticate, upload.array('image', 4), async (req, res) => {
-//     const allowedUpdates = ['name', 'category', 'description', 'address', 'lat', 'lng'];
-//     const updates = Object.keys(req.body);
-    
-//     const isValidOperation = updates.every(update => allowedUpdates.includes(update));
-//     if (!isValidOperation) {
-//         return res.status(400).send({ error: 'Invalid updates!' });
-//     }
-
-//     try {
-//         const place = await Place.findById(req.params.id);
-//         if (!place) {
-//             return res.status(404).send('Place not found');
-//         }
-
-//         updates.forEach(update => {
-//             place[update] = req.body[update];
-//         });
-
-//         if (req.files) {
-//             const placeImages = req.files.map(file => ({
-//                 data: file.buffer,
-//                 contentType: file.mimetype
-//             }));
-//             place.images = place.images.concat(placeImages);
-//         }
-
-//         await place.save();
-//         res.send(place);
-//     } catch (error) {
-//         res.status(500).send(error);
-//     }
-// });
-// Route untuk mengedit data tempat, termasuk mengganti gambar
 router.put('/:id', userAuthenticate, upload.array('image', 4), async (req, res) => {
     try {
         const place = await Place.findById(req.params.id);
-
         if (!place) {
             return res.status(404).send('Place not found');
         }
 
-        // Update data tempat
+        // Update fields
         place.name = req.body.name || place.name;
         place.category = req.body.category || place.category;
         place.description = req.body.description || place.description;
@@ -181,15 +146,16 @@ router.put('/:id', userAuthenticate, upload.array('image', 4), async (req, res) 
         place.lat = req.body.lat || place.lat;
         place.lng = req.body.lng || place.lng;
 
-        // Ganti gambar tertentu
-        if (req.files && req.files.length > 0 && req.body.imageIndexes) {
-            const imageIndexes = req.body.imageIndexes.split(',').map(index => parseInt(index.trim()));
-            
-            imageIndexes.forEach((index, i) => {
-                if (index >= 0 && index < place.images.length && i < req.files.length) {
-                    place.images[index] = {
-                        data: req.files[i].buffer,
-                        contentType: req.files[i].mimetype
+        // Mengganti gambar berdasarkan indeks yang diberikan
+        if (req.files && req.files.length > 0) {
+            const imageIndexes = req.body.imageIndexes || []; // Harapkan ini sebagai array indeks
+
+            req.files.forEach((file, index) => {
+                const imageIndex = imageIndexes[index];
+                if (imageIndex !== undefined && place.images[imageIndex]) {
+                    place.images[imageIndex] = {
+                        data: file.buffer,
+                        contentType: file.mimetype
                     };
                 }
             });
