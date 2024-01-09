@@ -131,7 +131,7 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-router.put('/:id', userAuthenticate, upload.array('image', 4), async (req, res) => {
+router.put('/:id', userAuthenticate, upload.array('newImages', 4), async (req, res) => {
     try {
         const place = await Place.findById(req.params.id);
         if (!place) {
@@ -146,26 +146,13 @@ router.put('/:id', userAuthenticate, upload.array('image', 4), async (req, res) 
         place.lat = req.body.lat || place.lat;
         place.lng = req.body.lng || place.lng;
 
-        // Mengganti atau menambahkan gambar
+        // Menangani gambar baru
         if (req.files && req.files.length > 0) {
-            const imageIndexes = req.body.imageIndexes ? req.body.imageIndexes.split(',').map(Number) : [];
-
-            req.files.forEach((file, index) => {
-                const imageIndex = imageIndexes.length > index ? imageIndexes[index] : place.images.length;
-
-                if (place.images[imageIndex]) {
-                    // Mengganti gambar yang sudah ada
-                    place.images[imageIndex] = {
-                        data: file.buffer,
-                        contentType: file.mimetype
-                    };
-                } else {
-                    // Menambahkan gambar baru
-                    place.images.push({
-                        data: file.buffer,
-                        contentType: file.mimetype
-                    });
-                }
+            req.files.forEach(file => {
+                place.images.push({
+                    data: file.buffer,
+                    contentType: file.mimetype
+                });
             });
         }
 
