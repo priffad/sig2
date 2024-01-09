@@ -196,14 +196,7 @@ router.put('/:id', userAuthenticate, upload.array('image', 4), async (req, res) 
         place.lat = req.body.lat || place.lat;
         place.lng = req.body.lng || place.lng;
 
-        // Menghapus gambar yang ditentukan
-        if (req.body.imagesToDelete) {
-            const imagesToDelete = req.body.imagesToDelete.split(','); // Anggap ini sebagai ID gambar yang harus dihapus
-            place.images = place.images.filter(image => !imagesToDelete.includes(image._id.toString()));
-        }
-
-        // Menambahkan gambar baru
-        if (req.files.length > 0) {
+        if (req.files) {
             const newImages = req.files.map(file => ({
                 data: file.buffer,
                 contentType: file.mimetype
@@ -211,8 +204,15 @@ router.put('/:id', userAuthenticate, upload.array('image', 4), async (req, res) 
             place.images.push(...newImages);
         }
 
+        // Handle deleted images
+        if (req.body.deleteImages) {
+            const imagesToDelete = req.body.deleteImages.split(",");
+            place.images = place.images.filter(image => !imagesToDelete.includes(image._id.toString()));
+            // Additionally, remove images from storage if needed
+        }
+
         await place.save();
-        res.status(200).send(place);
+        res.send(place);
     } catch (error) {
         res.status(500).send(error);
     }
