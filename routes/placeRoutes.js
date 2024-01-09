@@ -146,8 +146,18 @@ router.put('/:id', userAuthenticate, upload.array('newImages', 4), async (req, r
         place.lat = req.body.lat || place.lat;
         place.lng = req.body.lng || place.lng;
 
+        if (req.body.deletedImages) {
+            const deletedImages = JSON.parse(req.body.deletedImages);
+            place.images = place.images.filter((img, index) => !deletedImages.includes(index));
+        }
+
         // Menangani gambar baru
         if (req.files && req.files.length > 0) {
+            const totalImages = place.images.length + req.files.length;
+            if (totalImages > 4) {
+                return res.status(400).send('Cannot upload more than 4 images');
+            }
+
             req.files.forEach(file => {
                 place.images.push({
                     data: file.buffer,
