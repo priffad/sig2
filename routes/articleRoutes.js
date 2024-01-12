@@ -33,6 +33,21 @@ router.post('/', userAuthenticate, upload.single('image'), async (req, res) => {
         res.status(500).send(error);
     }
 });
+router.get('/', async (req, res) => {
+    try {
+        const articles = await Article.find();
+        const transformedArticles = articles.map(article => ({
+            ...article._doc,
+            image: article.image ? {
+                data: article.image.data.toString('base64'),
+                contentType: article.image.contentType
+            } : null
+        }));
+        res.status(200).send(transformedArticles);
+    } catch (error) {
+        res.status(500).send(error);
+    }
+});
 
 router.get('/:id', async (req, res) => {
     try {
@@ -42,40 +57,14 @@ router.get('/:id', async (req, res) => {
         }
         const transformedArticle = {
             ...article._doc,
-            image: {
+            image: article.image ? {
                 data: article.image.data.toString('base64'),
                 contentType: article.image.contentType
-            }
+            } : null
         };
         res.status(200).send(transformedArticle);
     } catch (error) {
         res.status(500).send(error);
-    }
-});
-
-
-router.patch('/:id', userAuthenticate, upload.single('image'), async (req, res) => {
-    try {
-        const event = await Event.findById(req.params.id);
-        if (!event) {
-            return res.status(404).send({ message: 'Event not found' });
-        }
-
-        const updates = Object.keys(req.body);
-        updates.forEach(update => event[update] = req.body[update]);
-
-
-        if (req.file) {
-            event.image = {
-                data: req.file.buffer,
-                contentType: req.file.mimetype
-            };
-        }
-
-        await event.save();
-        res.status(200).send(event);
-    } catch (error) {
-        res.status(400).send(error);
     }
 });
 
