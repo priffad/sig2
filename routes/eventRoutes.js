@@ -45,25 +45,49 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// UPDATE event by ID
+// router.patch('/:id', userAuthenticate, upload.single('image'), async (req, res) => {
+//     const updates = Object.keys(req.body);
+//     try {
+//         const event = await Event.findById(req.params.id);
+//         if (!event) {
+//             return res.status(404).send({ message: 'Event not found' });
+//         }
+//         updates.forEach(update => event[update] = req.body[update]);
+//         if (req.file) {
+//             event.image.data = req.file.buffer;
+//             event.image.contentType = req.file.mimetype;
+//         }
+//         await event.save();
+//         res.status(200).send(event);
+//     } catch (error) {
+//         res.status(400).send(error);
+//     }
+// });
 router.patch('/:id', userAuthenticate, upload.single('image'), async (req, res) => {
-    const updates = Object.keys(req.body);
     try {
         const event = await Event.findById(req.params.id);
         if (!event) {
             return res.status(404).send({ message: 'Event not found' });
         }
+
+        const updates = Object.keys(req.body);
         updates.forEach(update => event[update] = req.body[update]);
+
+
         if (req.file) {
-            event.image.data = req.file.buffer;
-            event.image.contentType = req.file.mimetype;
+            event.image = {
+                data: req.file.buffer,
+                contentType: req.file.mimetype
+            };
         }
+
         await event.save();
         res.status(200).send(event);
     } catch (error) {
         res.status(400).send(error);
     }
 });
+
 
 // DELETE event by ID
 router.delete('/:id', userAuthenticate, async (req, res) => {

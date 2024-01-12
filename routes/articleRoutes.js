@@ -53,18 +53,43 @@ router.get('/titles', async (req, res) => {
     }
 });
 
+// router.patch('/:id', userAuthenticate, upload.single('image'), async (req, res) => {
+//     const updates = Object.keys(req.body);
+//     try {
+//         const article = await Article.findById(req.params.id);
+//         if (!article) {
+//             return res.status(404).send({ message: 'article not found' });
+//         }
+//         updates.forEach(update => article[update] = req.body[update]);
+//         if (req.file) {
+//             article.image.data = req.file.buffer;
+//             article.image.contentType = req.file.mimetype;
+//         }
+//         await article.save();
+//         res.status(200).send(article);
+//     } catch (error) {
+//         res.status(400).send(error);
+//     }
+// });
 router.patch('/:id', userAuthenticate, upload.single('image'), async (req, res) => {
-    const updates = Object.keys(req.body);
     try {
         const article = await Article.findById(req.params.id);
         if (!article) {
-            return res.status(404).send({ message: 'article not found' });
+            return res.status(404).send({ message: 'Article not found' });
         }
+
+        // Update article fields
+        const updates = Object.keys(req.body);
         updates.forEach(update => article[update] = req.body[update]);
+
+        // Replace the existing image if a new one is provided
         if (req.file) {
-            article.image.data = req.file.buffer;
-            article.image.contentType = req.file.mimetype;
+            article.image = {
+                data: req.file.buffer,
+                contentType: req.file.mimetype
+            };
         }
+
         await article.save();
         res.status(200).send(article);
     } catch (error) {
@@ -72,7 +97,6 @@ router.patch('/:id', userAuthenticate, upload.single('image'), async (req, res) 
     }
 });
 
-module.exports = router;
 
 router.delete('/:id', userAuthenticate, async (req, res) => {
     try {
@@ -85,3 +109,6 @@ router.delete('/:id', userAuthenticate, async (req, res) => {
         res.status(500).send(error);
     }
 });
+
+
+module.exports = router;
