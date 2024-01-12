@@ -22,47 +22,40 @@ router.post('/', userAuthenticate, upload.single('image'), async (req, res) => {
         res.status(500).send(error);
     }
 });
-// GET all events
 router.get('/', async (req, res) => {
     try {
         const events = await Event.find();
-        res.status(200).send(events);
+        const transformedEvents = events.map(event => ({
+            ...event._doc,
+            image: event.image ? {
+                data: event.image.data.toString('base64'),
+                contentType: event.image.contentType
+            } : null
+        }));
+        res.status(200).send(transformedEvents);
     } catch (error) {
         res.status(500).send(error);
     }
 });
 
-// GET specific event by ID
 router.get('/:id', async (req, res) => {
     try {
         const event = await Event.findById(req.params.id);
         if (!event) {
             return res.status(404).send({ message: 'Event not found' });
         }
-        res.status(200).send(event);
+        const transformedEvent = {
+            ...event._doc,
+            image: event.image ? {
+                data: event.image.data.toString('base64'),
+                contentType: event.image.contentType
+            } : null
+        };
+        res.status(200).send(transformedEvent);
     } catch (error) {
         res.status(500).send(error);
     }
 });
-
-// router.patch('/:id', userAuthenticate, upload.single('image'), async (req, res) => {
-//     const updates = Object.keys(req.body);
-//     try {
-//         const event = await Event.findById(req.params.id);
-//         if (!event) {
-//             return res.status(404).send({ message: 'Event not found' });
-//         }
-//         updates.forEach(update => event[update] = req.body[update]);
-//         if (req.file) {
-//             event.image.data = req.file.buffer;
-//             event.image.contentType = req.file.mimetype;
-//         }
-//         await event.save();
-//         res.status(200).send(event);
-//     } catch (error) {
-//         res.status(400).send(error);
-//     }
-// });
 router.patch('/:id', userAuthenticate, upload.single('image'), async (req, res) => {
     try {
         const event = await Event.findById(req.params.id);

@@ -11,13 +11,7 @@ const router = express.Router();
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-async function deleteImage(imagePath) {
-    try {
-        fs.unlinkSync(path.join(__dirname, '..', imagePath)); // Sesuaikan path sesuai struktur proyek Anda
-    } catch (error) {
-        console.error(`Error during file deletion: ${error.message}`);
-    }
-}
+
 
 router.post('/', userAuthenticate, upload.array('image', 4), async (req, res) => {
     try {
