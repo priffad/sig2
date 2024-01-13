@@ -7,7 +7,10 @@ const articleSchema = new mongoose.Schema({
         required: true
     },
     content: String,
-    date: Date,
+    date: {
+        type: Date,
+        default: Date.now
+    },
     image: {
         data: Buffer,
         contentType: String

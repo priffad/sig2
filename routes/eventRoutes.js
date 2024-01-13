@@ -82,7 +82,6 @@ router.patch('/:id', userAuthenticate, upload.single('image'), async (req, res) 
 });
 
 
-// DELETE event by ID
 router.delete('/:id', userAuthenticate, async (req, res) => {
     try {
         const event = await Event.findByIdAndDelete(req.params.id);
