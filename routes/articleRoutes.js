@@ -6,15 +6,7 @@ const upload = multer();
 
 const { userAuthenticate } = require('../middleware/auth');
 
-// Convert image data to base64 format
-const convertImageToBase64 = (article) => {
-    if (article.image && article.image.data) {
-        article.image = {
-            ...article.image,
-            data: article.image.data.toString('base64')
-        };
-    }
-};
+
 
 router.post('/', userAuthenticate, upload.single('image'), async (req, res) => {
     const article = new Article({
@@ -27,7 +19,6 @@ router.post('/', userAuthenticate, upload.single('image'), async (req, res) => {
 
     try {
         await article.save();
-        convertImageToBase64(article);
         res.status(201).send(article);
     } catch (error) {
         res.status(500).send(error);
