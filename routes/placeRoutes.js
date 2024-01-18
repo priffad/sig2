@@ -199,15 +199,14 @@ router.patch('/:placeId/like', userAuthenticate, async (req, res) => {
         }
         await place.save();
 
-        res.status(200).json({ 
-            status: index === -1 ? 'liked' : 'unliked', 
-            likesCount: place.likes.length
-        });
+        res.status(200).json({
+            likesCount: place.likes.length 
 
     } catch (error) {
         res.status(500).json({ message: 'Failed to like the place', error: error.message });
     }
 });
+
 
 
 
