@@ -8,7 +8,7 @@ const upload = multer();
 
 
 router.post('/', userAuthenticate, upload.single('image'), async (req, res) => {
-    const article = new Event({
+    const event = new Event({
         ...req.body,
         image: {
             data: req.file.buffer,
@@ -16,8 +16,8 @@ router.post('/', userAuthenticate, upload.single('image'), async (req, res) => {
         }
     });
     try {
-        await article.save();
-        res.status(201).send(article);
+        await event.save();
+        res.status(201).send(event);
     } catch (error) {
         res.status(500).send(error);
     }

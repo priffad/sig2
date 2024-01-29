@@ -1,11 +1,10 @@
+const { userAuthenticate } = require('../middleware/auth');
 const express = require('express');
 const multer = require('multer');
-const Article = require('../models/Article');
+const Article = require('../models/Article');  
+
 const router = express.Router();
 const upload = multer();
-
-const { userAuthenticate } = require('../middleware/auth');
-
 
 
 router.post('/', userAuthenticate, upload.single('image'), async (req, res) => {
@@ -16,7 +15,6 @@ router.post('/', userAuthenticate, upload.single('image'), async (req, res) => {
             contentType: req.file.mimetype
         }
     });
-
     try {
         await article.save();
         res.status(201).send(article);
@@ -27,14 +25,14 @@ router.post('/', userAuthenticate, upload.single('image'), async (req, res) => {
 router.get('/', async (req, res) => {
     try {
         const articles = await Article.find();
-        const transformedArticles = articles.map(article => ({
+        const transformedarticles = articles.map(article => ({
             ...article._doc,
             image: article.image ? {
                 data: article.image.data.toString('base64'),
                 contentType: article.image.contentType
             } : null
         }));
-        res.status(200).send(transformedArticles);
+        res.status(200).send(transformedarticles);
     } catch (error) {
         res.status(500).send(error);
     }
@@ -44,42 +42,31 @@ router.get('/:id', async (req, res) => {
     try {
         const article = await Article.findById(req.params.id);
         if (!article) {
-            return res.status(404).send({ message: 'Article not found' });
+            return res.status(404).send({ message: 'article not found' });
         }
-        const transformedArticle = {
+        const transformedarticle = {
             ...article._doc,
             image: article.image ? {
                 data: article.image.data.toString('base64'),
                 contentType: article.image.contentType
             } : null
         };
-        res.status(200).send(transformedArticle);
+        res.status(200).send(transformedarticle);
     } catch (error) {
         res.status(500).send(error);
     }
 });
-
-router.get('/titles', async (req, res) => {
-    try {
-        const titles = await Article.find({}, 'title');
-        res.status(200).send(titles);
-    } catch (error) {
-        res.status(500).send(error);
-    }
-});
-
 router.patch('/:id', userAuthenticate, upload.single('image'), async (req, res) => {
     try {
         const article = await Article.findById(req.params.id);
         if (!article) {
-            return res.status(404).send({ message: 'Article not found' });
+            return res.status(404).send({ message: 'article not found' });
         }
 
-        // Update article fields
         const updates = Object.keys(req.body);
         updates.forEach(update => article[update] = req.body[update]);
 
-        // Replace the existing image if a new one is provided
+
         if (req.file) {
             article.image = {
                 data: req.file.buffer,
@@ -88,20 +75,19 @@ router.patch('/:id', userAuthenticate, upload.single('image'), async (req, res) 
         }
 
         await article.save();
-        convertImageToBase64(article);
         res.status(200).send(article);
     } catch (error) {
         res.status(400).send(error);
     }
 });
 
+
 router.delete('/:id', userAuthenticate, async (req, res) => {
     try {
         const article = await Article.findByIdAndDelete(req.params.id);
         if (!article) {
-            return res.status(404).send({ message: 'Article not found' });
+            return res.status(404).send({ message: 'article not found' });
         }
-        convertImageToBase64(article);
         res.status(200).send(article);
     } catch (error) {
         res.status(500).send(error);
