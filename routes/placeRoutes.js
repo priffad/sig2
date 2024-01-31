@@ -1,17 +1,11 @@
 
 const { userAuthenticate } = require('../middleware/auth');
-
-
 const express = require('express');
 const multer = require('multer');
-const Place = require('../models/Place');  // Sesuaikan path sesuai kebutuhan
-
+const Place = require('../models/Place'); 
 const router = express.Router();
-// Konfigurasi Multer untuk menyimpan file di memori
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
-
-
 
 router.post('/', userAuthenticate, upload.array('image', 4), async (req, res) => {
     try {
@@ -36,8 +30,6 @@ router.post('/', userAuthenticate, upload.array('image', 4), async (req, res) =>
         res.status(500).send(error);
     }
 });
-
-
 router.get('/', async (req, res) => {
     try {
         const places = await Place.find();
@@ -58,7 +50,6 @@ router.get('/', async (req, res) => {
         res.status(500).send(error);
     }
 });
-
 router.get('/top-liked', async (req, res) => {
     try {
         const topLikedPlaces = await Place.find()
@@ -132,7 +123,6 @@ router.put('/:id', userAuthenticate, upload.array('newImages', 4), async (req, r
             return res.status(404).send('Place not found');
         }
 
-        // Update fields
         place.name = req.body.name || place.name;
         place.category = req.body.category || place.category;
         place.description = req.body.description || place.description;
@@ -145,7 +135,6 @@ router.put('/:id', userAuthenticate, upload.array('newImages', 4), async (req, r
             place.images = place.images.filter((img, index) => !deletedImages.includes(index));
         }
 
-        // Menangani gambar baru
         if (req.files && req.files.length > 0) {
             const totalImages = place.images.length + req.files.length;
             if (totalImages > 4) {
@@ -166,9 +155,6 @@ router.put('/:id', userAuthenticate, upload.array('newImages', 4), async (req, r
         res.status(500).send(error);
     }
 });
-
-
-
 
 router.delete('/:id', userAuthenticate, async (req, res) => {
     try {

@@ -15,7 +15,6 @@ router.post('/', userAuthenticate, async (req, res) => {
         res.status(400).send(error);
     }
 });
-
 router.get('/', async (req, res) => {
     try {
         const categories = await Category.find();
@@ -24,8 +23,6 @@ router.get('/', async (req, res) => {
         res.status(500).send(error);
     }
 });
-
-
 router.get('/:categoryId/places', async (req, res) => {
     try {
         const category = await Category.findById(req.params.categoryId);
@@ -51,8 +48,6 @@ router.get('/:categoryId/places', async (req, res) => {
         res.status(500).send(error);
     }
 });
-
-
 router.put('/:id', userAuthenticate, async (req, res) => {
     const { name } = req.body;
     const category = await Category.findByIdAndUpdate(req.params.id, { name }, { new: true });
@@ -61,8 +56,6 @@ router.put('/:id', userAuthenticate, async (req, res) => {
 
     res.send(category);
 });
-
-// Delete a category (Admin only)
 router.delete('/:id', userAuthenticate, async (req, res) => {
     const category = await Category.findByIdAndRemove(req.params.id);
 

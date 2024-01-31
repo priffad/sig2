@@ -6,11 +6,11 @@ const User = require('../models/User');
 const { userAuthenticate } = require('../middleware/auth');
 const router = express.Router();
 
-// Register new user
+
 router.post('/register', async (req, res) => {
   const { username, password } = req.body;
   
-  // Check if username already exists
+
   let user = await User.findOne({ username });
   if (user) return res.status(400).send({ error: 'Username already exists' });
 
@@ -23,7 +23,7 @@ router.post('/register', async (req, res) => {
 }
 });
 
-// Login
+
 router.post('/login', async (req, res) => {
     try {
       const { username, password } = req.body;
@@ -44,28 +44,7 @@ router.post('/login', async (req, res) => {
     }
   });
 
-router.patch('/changepassword',userAuthenticate,  async (req, res) => {
-    try {
-        const { oldPassword, newPassword } = req.body;
 
-        // Verifikasi pengguna dengan token yang diberikan
-        const user = await User.findById(req.user._id); // diasumsikan userAuthenticate middleware menambahkan ID pengguna ke `req.user`
-
-        // Periksa apakah oldPassword valid
-        const isMatch = await bcrypt.compare(oldPassword, user.password);
-        if (!isMatch) {
-            return res.status(400).send({ error: 'Current password is incorrect' });
-        }
-
-        // Jika oldPassword valid, ganti dengan newPassword
-        user.password = await bcrypt.hash(newPassword, 8);
-        await user.save();
-
-        res.send({ message: 'Password updated successfully' });
-    } catch (error) {
-        res.status(500).send(error);
-    }
-});
 router.patch('/user/:userId/bookmarkArticle/:articleId', userAuthenticate, async (req, res) => {
     try {
         const user = await User.findById(req.params.userId);
@@ -105,20 +84,34 @@ router.patch('/user/:userId/bookmarkEvent/:eventId', userAuthenticate, async (re
 router.get('/user/:userId/bookmarkedArticles', async (req, res) => {
     try {
         const user = await User.findById(req.params.userId).populate('bookmarkedArticles');
-        res.status(200).send(user.bookmarkedArticles);
+        const transformedArticles = user.bookmarkedArticles.map(article => ({
+            ...article._doc,
+            image: article.image ? {
+                data: article.image.data.toString('base64'),
+                contentType: article.image.contentType
+            } : null
+        }));
+        res.status(200).send(transformedArticles);
     } catch (error) {
         res.status(500).send(error);
     }
 });
-
 
 router.get('/user/:userId/bookmarkedEvents', async (req, res) => {
     try {
         const user = await User.findById(req.params.userId).populate('bookmarkedEvents');
-        res.status(200).send(user.bookmarkedEvents);
+        const transformedEvents = user.bookmarkedEvents.map(event => ({
+            ...event._doc,
+            image: event.image ? {
+                data: event.image.data.toString('base64'),
+                contentType: event.image.contentType
+            } : null
+        }));
+        res.status(200).send(transformedEvents);
     } catch (error) {
         res.status(500).send(error);
     }
 });
+
 
 module.exports = router;
