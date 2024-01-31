@@ -13,7 +13,7 @@ router.post('/', userAuthenticate, upload.array('image', 4), async (req, res) =>
             data: file.buffer,
             contentType: file.mimetype
         }));
-        
+
         const place = new Place({
             name: req.body.name,
             category: req.body.category,
@@ -23,11 +23,11 @@ router.post('/', userAuthenticate, upload.array('image', 4), async (req, res) =>
             lng: req.body.lng,
             images: placeImages
         });
-        
+
         await place.save();
         res.status(201).send(place);
     } catch (error) {
-        res.status(500).send(error);
+        res.status(500).json({ message: "Internal server error", error: error.message });
     }
 });
 router.get('/', async (req, res) => {
