@@ -1,20 +1,21 @@
+// placeRoutes.js
+
 const express = require('express');
 const multer = require('multer');
 const Place = require('../models/Place');
 const { userAuthenticate } = require('../middleware/auth');
+const { uploadImageToS3 } = require('../services/s3Service'); // Pastikan ini sesuai dengan lokasi file Anda
+
 const router = express.Router();
+const upload = multer({ storage: multer.memoryStorage() });
 
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
-
+// Endpoint untuk membuat tempat baru
 router.post('/', userAuthenticate, upload.array('image', 4), async (req, res) => {
     try {
-        const placeImages = req.files.map(file => ({
-            data: file.buffer,
-            contentType: file.mimetype
-        }));
+        const placeImages = req.files.length ? await Promise.all(
+            req.files.map(file => uploadImageToS3(file.buffer, file.mimetype))
+        ) : [];
 
-        // Validasi dan sanitasi data req.body di sini
         const place = new Place({
             name: req.body.name,
             category: req.body.category,
@@ -33,6 +34,7 @@ router.post('/', userAuthenticate, upload.array('image', 4), async (req, res) =>
     }
 });
 
+// Endpoint untuk mendapatkan semua tempat
 router.get('/', async (req, res) => {
     try {
         const places = await Place.find();
@@ -43,6 +45,7 @@ router.get('/', async (req, res) => {
     }
 });
 
+// Endpoint untuk mendapatkan tempat berdasarkan ID
 router.get('/:id', async (req, res) => {
     try {
         const place = await Place.findById(req.params.id);
@@ -56,6 +59,7 @@ router.get('/:id', async (req, res) => {
     }
 });
 
+// Endpoint untuk memperbarui tempat
 router.put('/:id', userAuthenticate, upload.array('newImages', 4), async (req, res) => {
     try {
         const place = await Place.findById(req.params.id);
@@ -63,7 +67,7 @@ router.put('/:id', userAuthenticate, upload.array('newImages', 4), async (req, r
             return res.status(404).send('Place not found');
         }
 
-        // Update logic and data validation
+        // Update tempat
         place.name = req.body.name || place.name;
         place.category = req.body.category || place.category;
         place.description = req.body.description || place.description;
@@ -73,10 +77,9 @@ router.put('/:id', userAuthenticate, upload.array('newImages', 4), async (req, r
 
         // Handle image updates
         if (req.files && req.files.length > 0) {
-            const newImages = req.files.map(file => ({
-                data: file.buffer,
-                contentType: file.mimetype
-            }));
+            const newImages = await Promise.all(
+                req.files.map(file => uploadImageToS3(file.buffer, file.mimetype))
+            );
             place.images.push(...newImages);
         }
 
@@ -88,6 +91,7 @@ router.put('/:id', userAuthenticate, upload.array('newImages', 4), async (req, r
     }
 });
 
+// Endpoint untuk menghapus tempat
 router.delete('/:id', userAuthenticate, async (req, res) => {
     try {
         const place = await Place.findByIdAndDelete(req.params.id);
@@ -101,6 +105,7 @@ router.delete('/:id', userAuthenticate, async (req, res) => {
     }
 });
 
+// Endpoint untuk like/unlike tempat
 router.patch('/:placeId/like', userAuthenticate, async (req, res) => {
     try {
         const place = await Place.findById(req.params.placeId);
@@ -121,7 +126,7 @@ router.patch('/:placeId/like', userAuthenticate, async (req, res) => {
             likes: place.likes.length,
             place: {
                 ...place._doc,
-                images: place.images // Adjust according to your needs
+                images: place.images // Adjust sesuai dengan kebutuhan Anda
             }
         });
     } catch (error) {

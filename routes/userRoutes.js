@@ -81,15 +81,13 @@ router.patch('/user/:userId/bookmarkEvent/:eventId', userAuthenticate, async (re
 });
 
 
+
 router.get('/user/:userId/bookmarkedArticles', async (req, res) => {
     try {
         const user = await User.findById(req.params.userId).populate('bookmarkedArticles');
         const transformedArticles = user.bookmarkedArticles.map(article => ({
             ...article._doc,
-            image: article.image ? {
-                data: article.image.data.toString('base64'),
-                contentType: article.image.contentType
-            } : null
+            imageUrl: article.imageUrl  
         }));
         res.status(200).send(transformedArticles);
     } catch (error) {
@@ -102,16 +100,12 @@ router.get('/user/:userId/bookmarkedEvents', async (req, res) => {
         const user = await User.findById(req.params.userId).populate('bookmarkedEvents');
         const transformedEvents = user.bookmarkedEvents.map(event => ({
             ...event._doc,
-            image: event.image ? {
-                data: event.image.data.toString('base64'),
-                contentType: event.image.contentType
-            } : null
+            imageUrl: event.imageUrl  
         }));
         res.status(200).send(transformedEvents);
     } catch (error) {
         res.status(500).send(error);
     }
 });
-
 
 module.exports = router;

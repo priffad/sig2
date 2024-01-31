@@ -12,13 +12,10 @@ const placeSchema = new mongoose.Schema({
     },
     description: String,
     address: String,
-    images: [{
-        data: Buffer, 
-        contentType: String
-    }],
+    images: [String], // URL gambar
     lat: Number,
     lng: Number,
-    likes: [mongoose.Schema.Types.ObjectId],  // Array dari User IDs
+    likes: [mongoose.Schema.Types.ObjectId]
 });
 
 const Place = mongoose.model('Place', placeSchema);

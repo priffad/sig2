@@ -1,38 +1,37 @@
-const { userAuthenticate } = require('../middleware/auth');
+// routes/eventRoutes.js
+
 const express = require('express');
 const multer = require('multer');
-const Event = require('../models/Event');  
+const Event = require('../models/Event');
+const { userAuthenticate } = require('../middleware/auth');
+const { uploadImageToS3 } = require('../services/s3Service'); // Sesuaikan dengan lokasi file Anda
 
 const router = express.Router();
-const upload = multer();
-
+const upload = multer({ storage: multer.memoryStorage() });
 
 router.post('/', userAuthenticate, upload.single('image'), async (req, res) => {
-    const event = new Event({
-        ...req.body,
-        image: {
-            data: req.file.buffer,
-            contentType: req.file.mimetype
-        }
-    });
     try {
+        let imageUrl = null;
+        if (req.file) {
+            imageUrl = await uploadImageToS3(req.file.buffer, req.file.mimetype);
+        }
+
+        const event = new Event({
+            ...req.body,
+            imageUrl: imageUrl
+        });
+
         await event.save();
         res.status(201).send(event);
     } catch (error) {
         res.status(500).send(error);
     }
 });
+
 router.get('/', async (req, res) => {
     try {
         const events = await Event.find();
-        const transformedEvents = events.map(event => ({
-            ...event._doc,
-            image: event.image ? {
-                data: event.image.data.toString('base64'),
-                contentType: event.image.contentType
-            } : null
-        }));
-        res.status(200).send(transformedEvents);
+        res.status(200).send(events);
     } catch (error) {
         res.status(500).send(error);
     }
@@ -44,18 +43,12 @@ router.get('/:id', async (req, res) => {
         if (!event) {
             return res.status(404).send({ message: 'Event not found' });
         }
-        const transformedEvent = {
-            ...event._doc,
-            image: event.image ? {
-                data: event.image.data.toString('base64'),
-                contentType: event.image.contentType
-            } : null
-        };
-        res.status(200).send(transformedEvent);
+        res.status(200).send(event);
     } catch (error) {
         res.status(500).send(error);
     }
 });
+
 router.patch('/:id', userAuthenticate, upload.single('image'), async (req, res) => {
     try {
         const event = await Event.findById(req.params.id);
@@ -66,12 +59,9 @@ router.patch('/:id', userAuthenticate, upload.single('image'), async (req, res) 
         const updates = Object.keys(req.body);
         updates.forEach(update => event[update] = req.body[update]);
 
-
         if (req.file) {
-            event.image = {
-                data: req.file.buffer,
-                contentType: req.file.mimetype
-            };
+            const newImageUrl = await uploadImageToS3(req.file.buffer, req.file.mimetype);
+            event.imageUrl = newImageUrl;
         }
 
         await event.save();
@@ -81,14 +71,13 @@ router.patch('/:id', userAuthenticate, upload.single('image'), async (req, res) 
     }
 });
 
-
 router.delete('/:id', userAuthenticate, async (req, res) => {
     try {
         const event = await Event.findByIdAndDelete(req.params.id);
         if (!event) {
             return res.status(404).send({ message: 'Event not found' });
         }
-        res.status(200).send(event);
+        res.status(200).send({ message: 'Event deleted' });
     } catch (error) {
         res.status(500).send(error);
     }

@@ -1,21 +1,26 @@
-const { userAuthenticate } = require('../middleware/auth');
+// routes/sliderRoutes.js
+
 const express = require('express');
 const multer = require('multer');
-const Slider = require('../models/Slider');  
+const Slider = require('../models/Slider');
+const { userAuthenticate } = require('../middleware/auth');
+const { uploadImageToS3 } = require('../services/s3Service'); // Sesuaikan dengan lokasi file Anda
 
 const router = express.Router();
-const upload = multer();
-
+const upload = multer({ storage: multer.memoryStorage() });
 
 router.post('/', userAuthenticate, upload.single('image'), async (req, res) => {
-    const slider = new Slider({
-        ...req.body,
-        image: {
-            data: req.file.buffer,
-            contentType: req.file.mimetype
-        }
-    });
     try {
+        let imageUrl = null;
+        if (req.file) {
+            imageUrl = await uploadImageToS3(req.file.buffer, req.file.mimetype);
+        }
+
+        const slider = new Slider({
+            ...req.body,
+            imageUrl: imageUrl
+        });
+
         await slider.save();
         res.status(201).send(slider);
     } catch (error) {
@@ -23,33 +28,20 @@ router.post('/', userAuthenticate, upload.single('image'), async (req, res) => {
     }
 });
 
-
 router.get('/', async (req, res) => {
     try {
-       
-const sliders = await Slider.find();
-const slidersTransformed = sliders.map(slider => {
-    return {
-        ...slider._doc,
-        image: {
-            data: slider.image.data.toString('base64'),
-            contentType: slider.image.contentType
-        }
-    };
-});
-res.send(slidersTransformed);
-
+        const sliders = await Slider.find();
+        res.status(200).send(sliders); // Mengirimkan slider beserta imageUrl
     } catch (error) {
         res.status(500).send(error);
     }
 });
 
-
 router.get('/:id', async (req, res) => {
     try {
         const slider = await Slider.findById(req.params.id);
         if (!slider) {
-            return res.status(404).send({ message: 'slider not found' });
+            return res.status(404).send({ message: 'Slider not found' });
         }
         res.status(200).send(slider);
     } catch (error) {
@@ -57,19 +49,21 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-
 router.patch('/:id', userAuthenticate, upload.single('image'), async (req, res) => {
-    const updates = Object.keys(req.body);
     try {
         const slider = await Slider.findById(req.params.id);
         if (!slider) {
-            return res.status(404).send({ message: 'slider not found' });
+            return res.status(404).send({ message: 'Slider not found' });
         }
+
+        const updates = Object.keys(req.body);
         updates.forEach(update => slider[update] = req.body[update]);
+
         if (req.file) {
-            slider.image.data = req.file.buffer;
-            slider.image.contentType = req.file.mimetype;
+            const newImageUrl = await uploadImageToS3(req.file.buffer, req.file.mimetype);
+            slider.imageUrl = newImageUrl;
         }
+
         await slider.save();
         res.status(200).send(slider);
     } catch (error) {
@@ -77,14 +71,13 @@ router.patch('/:id', userAuthenticate, upload.single('image'), async (req, res) 
     }
 });
 
-
-router.delete('/slider/:id', userAuthenticate, async (req, res) => {
+router.delete('/:id', userAuthenticate, async (req, res) => {
     try {
         const slider = await Slider.findByIdAndDelete(req.params.id);
         if (!slider) {
-            return res.status(404).send({ message: 'slider not found' });
+            return res.status(404).send({ message: 'Slider not found' });
         }
-        res.status(200).send(slider);
+        res.status(200).send({ message: 'Slider deleted' });
     } catch (error) {
         res.status(500).send(error);
     }

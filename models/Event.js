@@ -1,4 +1,3 @@
-
 const mongoose = require('mongoose');
 
 const eventSchema = new mongoose.Schema({
@@ -14,12 +13,8 @@ const eventSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-
     date: Date,
-    image: {
-        data: Buffer,
-        contentType: String
-    }
+    imageUrl: String // Menyimpan URL gambar dari S3
 });
 
 const Event = mongoose.model('Event', eventSchema);

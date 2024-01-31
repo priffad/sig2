@@ -1,3 +1,4 @@
+// models/Article.js
 
 const mongoose = require('mongoose');
 
@@ -11,10 +12,7 @@ const articleSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
-    image: {
-        data: Buffer,
-        contentType: String
-    }
+    imageUrl: String // Menyimpan URL gambar dari S3
 });
 
 const Article = mongoose.model('Article', articleSchema);

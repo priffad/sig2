@@ -3,10 +3,7 @@ const mongoose = require('mongoose');
 
 const sliderSchema = new mongoose.Schema({
     title: String,
-    image: {
-        data: Buffer,
-        contentType: String
-    }
+    imageUrl: String 
 });
 
 const Slider = mongoose.model('Slider', sliderSchema);
