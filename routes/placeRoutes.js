@@ -9,7 +9,6 @@ const { uploadImageToS3 } = require('../services/s3Service'); // Pastikan ini se
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
-// Endpoint untuk membuat tempat baru
 router.post('/', userAuthenticate, upload.array('image', 4), async (req, res) => {
     try {
         const placeImages = req.files.length ? await Promise.all(
