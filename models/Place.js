@@ -15,7 +15,8 @@ const placeSchema = new mongoose.Schema({
     images: [String], // URL gambar
     lat: Number,
     lng: Number,
-    likes: [mongoose.Schema.Types.ObjectId]
+    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+
 });
 
 const Place = mongoose.model('Place', placeSchema);
