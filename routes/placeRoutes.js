@@ -53,7 +53,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Memperbarui tempat
-rrouter.patch('/:id', userAuthenticate, upload.array('images'), async (req, res) => {
+router.patch('/:id', userAuthenticate, upload.array('images'), async (req, res) => {
     const { id } = req.params;
     const updates = JSON.parse(req.body.updates); // Misalkan 'updates' berisi field selain 'images', seperti 'name', 'description', etc.
     const files = req.files;
