@@ -1,8 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const { cloudinary } = require('../cloudinaryConfig'); // Pastikan ini mengarah ke file konfigurasi Cloudinary Anda
-const { getCloudinaryStorage } = require('../cloudinaryConfig');
+const { cloudinary, getCloudinaryStorage } = require('../cloudinaryConfig'); // Asumsi ini mengarah ke file konfigurasi Cloudinary Anda
 const Place = require('../models/Place');
 const { userAuthenticate } = require('../middleware/auth');
 
@@ -12,7 +11,7 @@ const upload = multer({ storage: getCloudinaryStorage('places') });
 // Membuat tempat baru
 router.post('/', userAuthenticate, upload.array('image', 4), async (req, res) => {
     try {
-        const placeImages = req.files.map(file => file.path);
+        const placeImages = req.files.map(file => ({ url: file.path, public_id: file.filename })); // Simpan URL dan public_id
 
         const place = new Place({
             ...req.body,
@@ -26,6 +25,7 @@ router.post('/', userAuthenticate, upload.array('image', 4), async (req, res) =>
         res.status(500).json({ message: "Internal server error", error: error.toString() });
     }
 });
+
 
 // Mendapatkan semua tempat
 router.get('/', async (req, res) => {
@@ -53,22 +53,26 @@ router.get('/:id', async (req, res) => {
 });
 
 // Memperbarui tempat
-// Memperbarui tempat
-router.patch('/:id', parser.array('images', 5), async (req, res) => {
+router.patch('/:id', userAuthenticate, upload.array('image', 4), async (req, res) => {
     try {
         const place = await Place.findById(req.params.id);
         if (!place) {
             return res.status(404).send({ message: 'Tempat tidak ditemukan' });
         }
 
-        // Gambar baru dari upload (jika ada)
-        const newImagesUrls = req.files.map(file => file.path);
+        // Proses gambar baru dari upload (jika ada)
+        const newImagesUrls = req.files.map(file => ({ url: file.path, public_id: file.filename }));
 
-        // Gambar yang dipilih untuk dihapus (berdasarkan URL)
+        // Proses gambar yang dipilih untuk dihapus (berdasarkan public_id)
         const imagesToDelete = req.body.imagesToDelete ? JSON.parse(req.body.imagesToDelete) : [];
 
         // Filter gambar yang tidak dihapus
-        const filteredImages = place.images.filter(image => !imagesToDelete.includes(image));
+        const filteredImages = place.images.filter(image => !imagesToDelete.includes(image.public_id));
+
+        // Hapus gambar dari Cloudinary berdasarkan public_id
+        for (const public_id of imagesToDelete) {
+            await cloudinary.uploader.destroy(public_id);
+        }
 
         // Update tempat dengan gambar baru dan tanpa gambar yang dihapus
         place.images = [...filteredImages, ...newImagesUrls];
