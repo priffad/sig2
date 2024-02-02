@@ -12,7 +12,12 @@ const placeSchema = new mongoose.Schema({
     },
     description: String,
     address: String,
-    images: [String], // URL gambar
+    images: [
+        {
+            url: String,        
+            public_id: String   
+        }
+    ],
     lat: Number,
     lng: Number,
     likes: [mongoose.Schema.Types.ObjectId]

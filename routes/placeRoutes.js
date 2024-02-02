@@ -53,6 +53,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Memperbarui tempat
+// Memperbarui tempat
 router.patch('/:id', userAuthenticate, upload.array('newImages'), async (req, res) => {
     const { id } = req.params;
     let updates = req.body;
@@ -82,12 +83,15 @@ router.patch('/:id', userAuthenticate, upload.array('newImages'), async (req, re
             console.log('Deleting images:', updates.deletedImages);
 
             // Filter out deleted images from the place's images
-            updates.images = updates.images.filter(image => !updates.deletedImages.includes(image.public_id));
+            updates.images = updates.images.filter(image => {
+                return !updates.deletedImages.includes(image.public_id);
+            });
 
             // Delete images from Cloudinary
             for (const publicId of updates.deletedImages) {
-                await cloudinary.uploader.destroy(publicId, function(error,result) {
-                  console.log(result, error) });
+                await cloudinary.uploader.destroy(publicId, function (error, result) {
+                    console.log(result, error);
+                });
             }
         }
 
@@ -104,6 +108,7 @@ router.patch('/:id', userAuthenticate, upload.array('newImages'), async (req, re
         res.status(500).json({ message: "Error updating place", error: error.toString() });
     }
 });
+
 
 // Menghapus tempat
 router.delete('/:id', userAuthenticate, async (req, res) => {
