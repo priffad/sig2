@@ -54,38 +54,33 @@ router.get('/:id', async (req, res) => {
 
 // Memperbarui tempat
 // Memperbarui tempat
-router.patch('/:id', userAuthenticate, upload.array('newImages'), async (req, res) => {
-    const { id } = req.params;
-    // Diasumsikan req.body sudah berisi fields yang diperlukan kecuali gambar
+router.patch('/:id', parser.array('images', 5), async (req, res) => {
     try {
-        const place = await Place.findById(id);
-        if (!place) return res.status(404).json({ message: 'Place not found' });
-
-        // Proses gambar baru
-        if (req.files && req.files.length > 0) {
-            const newImagesUrls = req.files.map(file => file.path);
-            place.images = place.images.concat(newImagesUrls);
+        const place = await Place.findById(req.params.id);
+        if (!place) {
+            return res.status(404).send({ message: 'Tempat tidak ditemukan' });
         }
 
-        // Proses penghapusan gambar berdasarkan URL
-        if (req.body.deletedImages) {
-            const deletedImages = JSON.parse(req.body.deletedImages);
-            place.images = place.images.filter(image => !deletedImages.includes(image));
-        }
+        // Gambar baru dari upload (jika ada)
+        const newImagesUrls = req.files.map(file => file.path);
 
-        // Perbarui fields lainnya dari place sesuai dengan req.body
-        for (let prop in req.body) {
-            if (prop !== 'deletedImages') place[prop] = req.body[prop];
-        }
+        // Gambar yang dipilih untuk dihapus (berdasarkan URL)
+        const imagesToDelete = req.body.imagesToDelete ? JSON.parse(req.body.imagesToDelete) : [];
 
+        // Filter gambar yang tidak dihapus
+        const filteredImages = place.images.filter(image => !imagesToDelete.includes(image));
+
+        // Update tempat dengan gambar baru dan tanpa gambar yang dihapus
+        place.images = [...filteredImages, ...newImagesUrls];
         await place.save();
 
-        res.json(place);
+        res.send(place);
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: "Internal server error", error: error.toString() });
+        res.status(500).send({ message: 'Gagal memperbarui tempat', error: error.toString() });
     }
 });
+
 
 
 // Menghapus tempat
