@@ -51,6 +51,17 @@ router.get('/', async (req, res) => {
         res.status(500).json({ message: "Error fetching places", error: error.toString() });
     }
 });
+router.get('/top-liked-places', async (req, res) => {
+    try {
+        const topLikedPlaces = await Place.find()
+            .sort({ likes: -1 })
+            .limit(5); // Get the top 5 liked places
+        res.send(topLikedPlaces);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({ message: "Error fetching top liked places", error: error.message });
+    }
+});
 
 // Mendapatkan satu tempat berdasarkan id
 router.get('/:id', async (req, res) => {
@@ -65,17 +76,7 @@ router.get('/:id', async (req, res) => {
         res.status(500).json({ message: "Error fetching place", error: error.toString() });
     }
 });
-router.get('/top-liked', async (req, res) => {
-    try {
-        const topLikedPlaces = await Place.find()
-            .sort({ likes: -1 })
-            .limit(5); // Get the top 5 liked places
-        res.send(topLikedPlaces);
-    } catch (error) {
-        console.error(error);
-        res.status(500).send({ message: "Error fetching top liked places", error: error.message });
-    }
-});
+
 
 // Route to get places liked by a specific user
 router.get('/liked-by/:userId', userAuthenticate, async (req, res) => {
