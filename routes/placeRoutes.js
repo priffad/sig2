@@ -1,28 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const Place = require('../models/Place');
 const { userAuthenticate } = require('../middleware/auth');
+const { getCloudinaryStorage, cloudinary } = require('../cloudinaryConfig');
 
-// Konfigurasi Cloudinary
-cloudinary.config({
-    cloud_name: 'dijf4rpwv',
-    api_key: '325353924959639',
-    api_secret: 'nodzRD2PwgBkBzSN-80og4h4eKo',
-});
-
-// Konfigurasi penyimpanan Cloudinary
-const storage = new CloudinaryStorage({
-    cloudinary: cloudinary,
-    params: {
-        folder: 'places',
-        allowedFormats: ['jpg', 'png', 'jpeg'],
-    },
-});
-
+const storage = getCloudinaryStorage('places'); // Use Cloudinary storage with a specific folder name
 const upload = multer({ storage: storage });
+
+
 
 router.post('/', userAuthenticate, upload.array('images', 4), async (req, res) => {
     try {
