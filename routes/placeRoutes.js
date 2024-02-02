@@ -1,20 +1,24 @@
 const express = require('express');
-const multer = require('multer');
-const { userAuthenticate } = require('../middleware/auth');
-const Place = require('../models/Place');
-const { getCloudinaryStorage, cloudinary } = require('../cloudinaryConfig');
-
-// Setup multer untuk menggunakan cloudinary storage untuk 'places'
-const storage = getCloudinaryStorage('places');
-const upload = multer({ storage });
-
 const router = express.Router();
+const multer = require('multer');
+const { cloudinary } = require('../cloudinaryConfig'); // Pastikan ini mengarah ke file konfigurasi Cloudinary Anda
+const { getCloudinaryStorage } = require('../cloudinaryConfig');
+const Place = require('../models/Place');
+const { userAuthenticate } = require('../middleware/auth');
 
-// Membuat tempat baru dengan gambar
-router.post('/', userAuthenticate, upload.array('images', 4), async (req, res) => {
+// Setup multer untuk menggunakan storage Cloudinary
+const upload = multer({ storage: getCloudinaryStorage('places') });
+
+// Membuat tempat baru
+router.post('/', userAuthenticate, upload.array('image', 4), async (req, res) => {
     try {
-        const placeImages = req.files.map(file => ({ url: file.path, filename: file.filename }));
-        const place = new Place({ ...req.body, images: placeImages });
+        const placeImages = req.files.map(file => file.path);
+
+        const place = new Place({
+            ...req.body,
+            images: placeImages
+        });
+
         await place.save();
         res.status(201).json(place);
     } catch (error) {
@@ -27,7 +31,7 @@ router.post('/', userAuthenticate, upload.array('images', 4), async (req, res) =
 router.get('/', async (req, res) => {
     try {
         const places = await Place.find({});
-        res.status(200).json(places);
+        res.json(places);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Error fetching places", error: error.toString() });
@@ -41,7 +45,7 @@ router.get('/:id', async (req, res) => {
         if (!place) {
             return res.status(404).json({ message: 'Place not found' });
         }
-        res.status(200).json(place);
+        res.json(place);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Error fetching place", error: error.toString() });
@@ -49,60 +53,99 @@ router.get('/:id', async (req, res) => {
 });
 
 // Memperbarui tempat
-router.patch('/:id', userAuthenticate, upload.array('newImages', 4), async (req, res) => {
-    try {
-        const { id } = req.params;
-        let place = await Place.findById(id);
+router.patch('/:id', userAuthenticate, upload.array('newImages'), async (req, res) => {
+    const { id } = req.params;
+    let updates = { ...req.body };
 
+    // Parse field yang mungkin berformat JSON string menjadi objek/array
+    if (typeof updates.deletedImages === 'string') {
+        updates.deletedImages = JSON.parse(updates.deletedImages);
+    }
+
+    try {
+        // Temukan tempat berdasarkan ID
+        const place = await Place.findById(id);
+        if (!place) {
+            return res.status(404).json({ message: 'Tempat tidak ditemukan' });
+        }
+
+        // Tambahkan URL gambar baru ke array gambar jika ada
+        if (req.files && req.files.length > 0) {
+            const newImages = req.files.map(file => file.path);
+            updates.images = place.images.concat(newImages);
+        } else if (!updates.hasOwnProperty('newImages') && !updates.deletedImages) {
+            // Jika tidak ada gambar baru dan tidak ada permintaan penghapusan gambar, tetapkan images ke yang sudah ada
+            updates.images = place.images;
+        }
+
+        // Hapus gambar yang diminta
+        if (updates.deletedImages && updates.deletedImages.length > 0) {
+            updates.images = updates.images.filter(image => !updates.deletedImages.includes(image));
+
+            // Hapus dari Cloudinary
+            for (const publicId of updates.deletedImages) {
+                await cloudinary.uploader.destroy(publicId);
+            }
+        }
+
+        // Perbarui tempat dengan data baru
+        const updatedPlace = await Place.findByIdAndUpdate(id, updates, { new: true }).lean();
+        res.json(updatedPlace);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error updating place", error: error.toString() });
+    }
+});
+
+// Menghapus tempat
+router.delete('/:id', userAuthenticate, async (req, res) => {
+    try {
+        const place = await Place.findByIdAndRemove(req.params.id);
+        if (place && place.images) {
+            // Hapus gambar dari Cloudinary
+            for (const image of place.images) {
+                const publicId = image.split('/').pop().split('.')[0];
+                await cloudinary.uploader.destroy(publicId);
+            }
+        }
+        res.json({ message: 'Place deleted successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error deleting place", error: error.toString() });
+    }
+});
+
+
+
+
+// Endpoint untuk like/unlike tempat
+router.patch('/:placeId/like', userAuthenticate, async (req, res) => {
+    try {
+        const place = await Place.findById(req.params.placeId);
         if (!place) {
             return res.status(404).json({ message: 'Place not found' });
         }
 
-        if (req.files) {
-            const newImages = req.files.map(file => ({ url: file.path, filename: file.filename }));
-            place.images.push(...newImages);
+        const index = place.likes.indexOf(req.user._id);
+        if (index === -1) {
+            place.likes.push(req.user._id);
+        } else {
+            place.likes.splice(index, 1);
         }
+        await place.save();
 
-        // Update fields if provided
-                // Update fields if provided
-                place.name = req.body.name || place.name;
-                place.description = req.body.description || place.description;
-                place.address = req.body.address || place.address;
-                place.lat = req.body.lat || place.lat;
-                place.lng = req.body.lng || place.lng;
-                // Anda bisa menambahkan atau memperbarui field lain sesuai kebutuhan
-                
-                // Simpan perubahan
-                await place.save();
-        
-                res.status(200).json(place);
-            } catch (error) {
-                console.error(error);
-                res.status(500).json({ message: "Error updating place", error: error.toString() });
+        res.status(200).json({
+            status: index === -1 ? 'liked' : 'unliked',
+            likes: place.likes.length,
+            place: {
+                ...place._doc,
+                images: place.images // Adjust sesuai dengan kebutuhan Anda
             }
         });
-        
-        // Menghapus tempat
-        router.delete('/:id', userAuthenticate, async (req, res) => {
-            try {
-                const place = await Place.findByIdAndDelete(req.params.id);
-                if (!place) {
-                    return res.status(404).json({ message: 'Place not found' });
-                }
-        
-                // Jika tempat memiliki gambar, hapus gambar tersebut dari Cloudinary
-                if (place.images && place.images.length > 0) {
-                    for (let image of place.images) {
-                        await cloudinary.uploader.destroy(image.filename);
-                    }
-                }
-        
-                res.status(200).json({ message: 'Place deleted successfully' });
-            } catch (error) {
-                console.error(error);
-                res.status(500).json({ message: "Error deleting place", error: error.toString() });
-            }
-        });
-        
-        module.exports = router;
-        
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Failed to like the place', error: error.message });
+    }
+});
+
+module.exports = router;
