@@ -57,13 +57,11 @@ router.patch('/:id', userAuthenticate, upload.array('newImages'), async (req, re
     const { id } = req.params;
     let updates = req.body;
 
-    // Convert deletedImages from JSON string to an array if it's a string.
-    if (updates.deletedImages && typeof updates.deletedImages === 'string') {
-        try {
-            updates.deletedImages = JSON.parse(updates.deletedImages);
-        } catch (error) {
-            return res.status(400).json({ message: "Invalid format for deletedImages", error: error.toString() });
-        }
+    // Ensure updates.images is an array if not already
+    if (updates.images && typeof updates.images === 'string') {
+        updates.images = JSON.parse(updates.images);
+    } else if (!updates.images) {
+        updates.images = [];
     }
 
     try {
@@ -72,22 +70,29 @@ router.patch('/:id', userAuthenticate, upload.array('newImages'), async (req, re
             return res.status(404).json({ message: 'Place not found' });
         }
 
-        // Add new images to the place's images if there are any
+        // Handle new images (if any)
         if (req.files && req.files.length > 0) {
             const newImages = req.files.map(file => ({ url: file.path, public_id: file.filename }));
-            updates.images = (place.images || []).concat(newImages);
+            updates.images = updates.images.concat(newImages);
         }
 
-        // Delete specified images from Cloudinary and remove them from the place's images
+        // Handle deleted images
         if (updates.deletedImages && updates.deletedImages.length > 0) {
-            // Filter out deleted images
-            updates.images = (place.images || []).filter(image => !updates.deletedImages.includes(image.public_id));
+            // Log for debugging
+            console.log('Deleting images:', updates.deletedImages);
+
+            // Filter out deleted images from the place's images
+            updates.images = updates.images.filter(image => !updates.deletedImages.includes(image.public_id));
 
             // Delete images from Cloudinary
             for (const publicId of updates.deletedImages) {
-                await cloudinary.uploader.destroy(publicId);
+                await cloudinary.uploader.destroy(publicId, function(error,result) {
+                  console.log(result, error) });
             }
         }
+
+        // Remove deletedImages field from updates to prevent database errors
+        delete updates.deletedImages;
 
         // Update the place with new data
         Object.assign(place, updates);
@@ -95,10 +100,11 @@ router.patch('/:id', userAuthenticate, upload.array('newImages'), async (req, re
 
         res.json(place);
     } catch (error) {
-        console.error(error);
+        console.error('Error updating place:', error);
         res.status(500).json({ message: "Error updating place", error: error.toString() });
     }
 });
+
 // Menghapus tempat
 router.delete('/:id', userAuthenticate, async (req, res) => {
     try {
