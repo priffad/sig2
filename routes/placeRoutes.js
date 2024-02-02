@@ -65,7 +65,33 @@ router.get('/:id', async (req, res) => {
         res.status(500).json({ message: "Error fetching place", error: error.toString() });
     }
 });
+router.get('/top-liked', async (req, res) => {
+    try {
+        const topLikedPlaces = await Place.find()
+            .sort({ likes: -1 })
+            .limit(5); // Get the top 5 liked places
+        res.send(topLikedPlaces);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({ message: "Error fetching top liked places", error: error.message });
+    }
+});
 
+// Route to get places liked by a specific user
+router.get('/liked-by/:userId', userAuthenticate, async (req, res) => {
+    try {
+        // Check if the requested user ID matches the authenticated user's ID
+        if (req.params.userId !== req.user._id.toString()) {
+            return res.status(403).json({ message: "Access denied. You can only view your own liked places." });
+        }
+
+        const likedPlaces = await Place.find({ likes: req.params.userId });
+        res.send(likedPlaces);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({ message: "Error fetching places liked by the user", error: error.message });
+    }
+});
 // Memperbarui tempat dengan logika untuk menghapus gambar lama dan menambah gambar baru
 router.patch('/:id', userAuthenticate, upload.array('newImages'), async (req, res) => {
     try {
