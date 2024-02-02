@@ -1,5 +1,18 @@
 const mongoose = require('mongoose');
 
+
+const imageSchema = new mongoose.Schema({
+    url: {
+        type: String,
+        required: true
+    },
+    public_id: {
+        type: String,
+        required: true
+    }
+});
+
+
 const placeSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -10,14 +23,29 @@ const placeSchema = new mongoose.Schema({
         ref: 'Category',
         required: true
     },
-    description: String,
-    address: String,
-    images: [String], // URL gambar
-    lat: Number,
-    lng: Number,
-    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
-
+    description: {
+        type: String,
+        required: false
+    },
+    address: {
+        type: String,
+        required: false
+    },
+    images: [imageSchema], // Menggunakan array dari schema gambar
+    lat: {
+        type: Number,
+        required: false
+    },
+    lng: {
+        type: Number,
+        required: false
+    },
+    likes: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }]
 });
 
 const Place = mongoose.model('Place', placeSchema);
+
 module.exports = Place;
