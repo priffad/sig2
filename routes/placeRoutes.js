@@ -12,14 +12,28 @@ const upload = multer({ storage: getCloudinaryStorage('places') });
 // Membuat tempat baru
 router.post('/', userAuthenticate, upload.array('image', 4), async (req, res) => {
     try {
-        const placeImages = req.files.map(file => file.path);
+        const placeImages = [];
 
+        // Mengunggah gambar ke Cloudinary dan membuat public_id otomatis
+        for (const file of req.files) {
+            const timestamp = new Date().getTime();
+            const publicId = `image_${timestamp}`;
+
+            const result = await cloudinary.uploader.upload(file.buffer, { public_id: publicId });
+            const imageUrl = result.secure_url;
+
+            placeImages.push({ url: imageUrl, public_id: publicId });
+        }
+
+        // Membuat tempat dengan data termasuk gambar
         const place = new Place({
             ...req.body,
             images: placeImages
         });
 
+        // Simpan tempat ke basis data
         await place.save();
+
         res.status(201).json(place);
     } catch (error) {
         console.error(error);
