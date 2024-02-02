@@ -28,30 +28,20 @@ router.get('/:categoryId/places', async (req, res) => {
     try {
         const category = await Category.findById(req.params.categoryId);
         if (!category) {
-            return res.status(404).json({ message: 'Category not found' });
+            return res.status(404).json([]); // Return an empty array if the category is not found
         }
 
-        // Assuming consistency in response format is desired
         const places = await Place.find({ category: category._id })
-                                  .populate('category', 'name') // Include if category name is useful for the response
-                                  .select('name description address images lat lng likes'); // Adjust field selection as needed
+                                  .populate('category', 'name') // Include this only if necessary
+                                  .select('name description address images lat lng likes'); // Adjust as necessary
 
-        // Standardizing the response format to match other GET routes in your application
-        res.json({
-            success: true,
-            message: "Places fetched successfully",
-            data: places
-        });
+        res.json(places); // Return the array of places directly
     } catch (error) {
         console.error('Failed to fetch places by category:', error);
-        // Following a standardized error response format
-        res.status(500).json({
-            success: false,
-            message: "Internal server error",
-            error: error.toString()
-        });
+        res.status(500).json([]); // Return an empty array in case of server error
     }
 });
+
 
 router.put('/:id', userAuthenticate, async (req, res) => {
     const { name } = req.body;
