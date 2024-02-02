@@ -56,56 +56,34 @@ router.get('/:id', async (req, res) => {
 // Memperbarui tempat
 router.patch('/:id', userAuthenticate, upload.array('newImages'), async (req, res) => {
     const { id } = req.params;
-    let updates = req.body;
-
-    // Ensure updates.images is an array if not already
-    if (updates.images && typeof updates.images === 'string') {
-        updates.images = JSON.parse(updates.images);
-    } else if (!updates.images) {
-        updates.images = [];
-    }
-
+    // Diasumsikan req.body sudah berisi fields yang diperlukan kecuali gambar
     try {
         const place = await Place.findById(id);
-        if (!place) {
-            return res.status(404).json({ message: 'Place not found' });
-        }
+        if (!place) return res.status(404).json({ message: 'Place not found' });
 
-        // Handle new images (if any)
+        // Proses gambar baru
         if (req.files && req.files.length > 0) {
-            const newImages = req.files.map(file => ({ url: file.path, public_id: file.filename }));
-            updates.images = updates.images.concat(newImages);
+            const newImagesUrls = req.files.map(file => file.path);
+            place.images = place.images.concat(newImagesUrls);
         }
 
-        // Handle deleted images
-        if (updates.deletedImages && updates.deletedImages.length > 0) {
-            // Log for debugging
-            console.log('Deleting images:', updates.deletedImages);
-
-            // Filter out deleted images from the place's images
-            updates.images = updates.images.filter(image => {
-                return !updates.deletedImages.includes(image.public_id);
-            });
-
-            // Delete images from Cloudinary
-            for (const publicId of updates.deletedImages) {
-                await cloudinary.uploader.destroy(publicId, function (error, result) {
-                    console.log(result, error);
-                });
-            }
+        // Proses penghapusan gambar berdasarkan URL
+        if (req.body.deletedImages) {
+            const deletedImages = JSON.parse(req.body.deletedImages);
+            place.images = place.images.filter(image => !deletedImages.includes(image));
         }
 
-        // Remove deletedImages field from updates to prevent database errors
-        delete updates.deletedImages;
+        // Perbarui fields lainnya dari place sesuai dengan req.body
+        for (let prop in req.body) {
+            if (prop !== 'deletedImages') place[prop] = req.body[prop];
+        }
 
-        // Update the place with new data
-        Object.assign(place, updates);
         await place.save();
 
         res.json(place);
     } catch (error) {
-        console.error('Error updating place:', error);
-        res.status(500).json({ message: "Error updating place", error: error.toString() });
+        console.error(error);
+        res.status(500).json({ message: "Internal server error", error: error.toString() });
     }
 });
 
