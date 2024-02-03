@@ -1,30 +1,26 @@
-// routes/eventRoutes.js
-
 const express = require('express');
 const multer = require('multer');
-const Event = require('../models/Event');
 const { userAuthenticate } = require('../middleware/auth');
-const { uploadImageToS3 } = require('../services/s3Service'); // Sesuaikan dengan lokasi file Anda
+const Event = require('../models/Event');
+const { getCloudinaryStorage, cloudinary } = require('../cloudinaryConfig');
+
+// Setup multer untuk menggunakan cloudinary storage
+const storage = getCloudinaryStorage('events');
+const upload = multer({ storage });
 
 const router = express.Router();
-const upload = multer({ storage: multer.memoryStorage() });
 
 router.post('/', userAuthenticate, upload.single('image'), async (req, res) => {
     try {
-        let imageUrl = null;
-        if (req.file) {
-            imageUrl = await uploadImageToS3(req.file.buffer, req.file.mimetype);
-        }
-
         const event = new Event({
             ...req.body,
-            imageUrl: imageUrl
+            imageUrl: req.file ? req.file.path : ''
         });
-
         await event.save();
-        res.status(201).send(event);
+        res.status(201).json(event);
     } catch (error) {
-        res.status(500).send(error);
+        console.error(error);
+        res.status(500).json({ message: "Internal server error", error: error.toString() });
     }
 });
 
@@ -50,37 +46,34 @@ router.get('/:id', async (req, res) => {
 });
 
 router.patch('/:id', userAuthenticate, upload.single('image'), async (req, res) => {
+    const { id } = req.params;
+
+    const eventUpdates = req.body;
+    if (req.file) {
+        eventUpdates.imageUrl = req.file.path;
+    }
+
     try {
-        const event = await Event.findById(req.params.id);
-        if (!event) {
-            return res.status(404).send({ message: 'Event not found' });
-        }
-
-        const updates = Object.keys(req.body);
-        updates.forEach(update => event[update] = req.body[update]);
-
-        if (req.file) {
-            const newImageUrl = await uploadImageToS3(req.file.buffer, req.file.mimetype);
-            event.imageUrl = newImageUrl;
-        }
-
-        await event.save();
-        res.status(200).send(event);
+        const updatedEvent = await Event.findByIdAndUpdate(id, eventUpdates, { new: true });
+        res.status(200).json(updatedEvent);
     } catch (error) {
-        res.status(400).send(error);
+        console.error(error);
+        res.status(500).json({ message: "Error updating event", error: error.toString() });
     }
 });
+
 
 router.delete('/:id', userAuthenticate, async (req, res) => {
     try {
-        const event = await Event.findByIdAndDelete(req.params.id);
-        if (!event) {
-            return res.status(404).send({ message: 'Event not found' });
+        const event = await Event.findByIdAndRemove(req.params.id);
+        if (event && event.imageUrl) {
+            const publicId = event.imageUrl.split('/').pop().split('.')[0];
+            await cloudinary.uploader.destroy(publicId);
         }
-        res.status(200).send({ message: 'Event deleted' });
+        res.status(200).json({ message: 'event deleted successfully' });
     } catch (error) {
-        res.status(500).send(error);
+        console.error(error);
+        res.status(500).json({ message: "Error deleting event", error: error.toString() });
     }
 });
-
 module.exports = router;

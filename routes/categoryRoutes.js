@@ -23,22 +23,22 @@ router.get('/', async (req, res) => {
         res.status(500).send(error);
     }
 });
-// Example of a GET route for fetching places by category ID, styled similarly to existing place routes
+
 router.get('/:categoryId/places', async (req, res) => {
     try {
         const category = await Category.findById(req.params.categoryId);
         if (!category) {
-            return res.status(404).json([]); // Return an empty array if the category is not found
+            return res.status(404).json([]); 
         }
 
         const places = await Place.find({ category: category._id })
-                                  .populate('category', 'name') // Include this only if necessary
-                                  .select('name description address images lat lng likes'); // Adjust as necessary
+                                  .populate('category', 'name') 
+                                  .select('name description address images lat lng likes'); 
 
-        res.json(places); // Return the array of places directly
+        res.json(places); 
     } catch (error) {
         console.error('Failed to fetch places by category:', error);
-        res.status(500).json([]); // Return an empty array in case of server error
+        res.status(500).json([]); 
     }
 });
 
