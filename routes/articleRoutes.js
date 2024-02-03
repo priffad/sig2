@@ -74,7 +74,6 @@ router.delete('/:id', userAuthenticate, async (req, res) => {
     try {
         const article = await Article.findByIdAndRemove(req.params.id);
         if (article && article.imageUrl) {
-            // Hapus gambar dari Cloudinary
             const publicId = article.imageUrl.split('/').pop().split('.')[0];
             await cloudinary.uploader.destroy(publicId);
         }

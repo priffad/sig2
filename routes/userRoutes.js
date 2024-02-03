@@ -84,28 +84,30 @@ router.patch('/user/:userId/bookmarkEvent/:eventId', userAuthenticate, async (re
 
 router.get('/user/:userId/bookmarkedArticles', async (req, res) => {
     try {
-        const user = await User.findById(req.params.userId).populate('bookmarkedArticles');
-        const transformedArticles = user.bookmarkedArticles.map(article => ({
-            ...article._doc,
-            imageUrl: article.imageUrl  
-        }));
-        res.status(200).send(transformedArticles);
+        const user = await User.findById(req.params.userId)
+                               .populate({
+                                   path: 'bookmarkedArticles',
+                                   select: 'title content date imageUrl' // Pilih field yang dibutuhkan saja
+                               });
+        res.status(200).send(user.bookmarkedArticles);
     } catch (error) {
-        res.status(500).send(error);
+        console.error(error); 
+        res.status(500).send({ message: 'Internal server error', error: error.message });
     }
 });
 
 router.get('/user/:userId/bookmarkedEvents', async (req, res) => {
     try {
-        const user = await User.findById(req.params.userId).populate('bookmarkedEvents');
-        const transformedEvents = user.bookmarkedEvents.map(event => ({
-            ...event._doc,
-            imageUrl: event.imageUrl  
-        }));
-        res.status(200).send(transformedEvents);
+        const user = await User.findById(req.params.userId)
+                               .populate({
+                                   path: 'bookmarkedEvents',
+                                   select: 'title description location date imageUrl' // Pilih field yang dibutuhkan saja
+                               });
+
+        res.status(200).send(user.bookmarkedEvents);
     } catch (error) {
-        res.status(500).send(error);
+        console.error(error); 
+        res.status(500).send({ message: 'Internal server error', error: error.message });
     }
 });
-
 module.exports = router;
