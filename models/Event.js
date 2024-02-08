@@ -14,7 +14,7 @@ const eventSchema = new mongoose.Schema({
         required: true
     },
     date: Date,
-    imageUrl: String // Menyimpan URL gambar dari S3
+    imageUrl: String
 });
 
 const Event = mongoose.model('Event', eventSchema);

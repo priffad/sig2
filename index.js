@@ -32,14 +32,14 @@ conn.once('open', () => {
 });
 
 // Import routes
-const userRoutes = require('./routes/userRoutes');
-const adminRoutes = require('./routes/adminRoutes');
-const categoryRoutes = require('./routes/categoryRoutes');
-const placeRoutes = require('./routes/placeRoutes');
-const reviewRoutes = require('./routes/reviewRoutes');
-const articleRoutes = require('./routes/articleRoutes');
-const eventRoutes = require('./routes/eventRoutes');
-const sliderRoutes = require('./routes/sliderRoutes');
+const userRoutes = require('./routes/UserController');
+const adminRoutes = require('./routes/AdminController');
+const categoryRoutes = require('./routes/CategoryController');
+const placeRoutes = require('./routes/PlaceController');
+const reviewRoutes = require('./routes/ReviewController');
+const articleRoutes = require('./routes/ArticleController');
+const eventRoutes = require('./routes/EventController');
+const sliderRoutes = require('./routes/SliderController');
 
 // Use routes
 app.use('/api/users', userRoutes);
