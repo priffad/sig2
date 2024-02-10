@@ -14,7 +14,11 @@ const eventSchema = new mongoose.Schema({
         required: true
     },
     date: Date,
-    imageUrl: String
+    imageUrl: String,
+    bookmarkedBy: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }]
 });
 
 const Event = mongoose.model('Event', eventSchema);

@@ -5,7 +5,7 @@ const Place = require('../models/Place');
 const { userAuthenticate } = require('../middleware/auth');
 const { getCloudinaryStorage, cloudinary } = require('../cloudinaryConfig');
 
-const storage = getCloudinaryStorage('places'); // Use Cloudinary storage with a specific folder name
+const storage = getCloudinaryStorage('places'); 
 const upload = multer({ storage: storage });
 
 
@@ -41,7 +41,7 @@ router.get('/top-liked-places', async (req, res) => {
     try {
         const topLikedPlaces = await Place.find()
             .sort({ likes: -1 })
-            .limit(5); // Get the top 5 liked places
+            .limit(5);
         res.send(topLikedPlaces);
     } catch (error) {
         console.error(error);
@@ -49,7 +49,7 @@ router.get('/top-liked-places', async (req, res) => {
     }
 });
 
-// Mendapatkan satu tempat berdasarkan id
+
 router.get('/:id', async (req, res) => {
     try {
         const place = await Place.findById(req.params.id);
@@ -64,10 +64,8 @@ router.get('/:id', async (req, res) => {
 });
 
 
-// Route to get places liked by a specific user
 router.get('/liked-by/:userId', userAuthenticate, async (req, res) => {
     try {
-        // Check if the requested user ID matches the authenticated user's ID
         if (req.params.userId !== req.user._id.toString()) {
             return res.status(403).json({ message: "Access denied. You can only view your own liked places." });
         }
@@ -79,7 +77,7 @@ router.get('/liked-by/:userId', userAuthenticate, async (req, res) => {
         res.status(500).send({ message: "Error fetching places liked by the user", error: error.message });
     }
 });
-// Memperbarui tempat dengan logika untuk menghapus gambar lama dan menambah gambar baru
+
 router.patch('/:id', userAuthenticate, upload.array('newImages'), async (req, res) => {
     try {
         const place = await Place.findById(req.params.id);
@@ -87,35 +85,31 @@ router.patch('/:id', userAuthenticate, upload.array('newImages'), async (req, re
             return res.status(404).json({ message: 'Place not found' });
         }
 
-        // Proses gambar baru yang di-upload
         const newImages = req.files.map(file => ({
             url: file.path,
             public_id: file.filename
         }));
 
-        // Gabungkan gambar baru dengan yang lama
         place.images = [...place.images, ...newImages];
 
-        // Cek apakah ada gambar yang perlu dihapus
+     
         if (req.body.deletedImages) {
             const deletedImages = JSON.parse(req.body.deletedImages);
-            // Hapus gambar dari Cloudinary
+     
             for (const publicId of deletedImages) {
                 await cloudinary.uploader.destroy(publicId);
             }
-            // Hapus gambar dari array images di dokumen MongoDB
             place.images = place.images.filter(image => !deletedImages.includes(image.public_id));
         }
 
-        // Update properti lain dari place sesuai dengan data yang diberikan
+       
         if (req.body.name) place.name = req.body.name;
         if (req.body.description) place.description = req.body.description;
         if (req.body.category) place.category = req.body.category;
         if (req.body.address) place.address = req.body.address;
         if (req.body.lat) place.lat = req.body.lat;
         if (req.body.lng) place.lng = req.body.lng;
-        // Lanjutkan untuk properti lainnya sesuai kebutuhan
-
+    
         await place.save();
         res.json(place);
     } catch (error) {

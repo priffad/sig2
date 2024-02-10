@@ -1,5 +1,3 @@
-// models/Article.js
-
 const mongoose = require('mongoose');
 
 const articleSchema = new mongoose.Schema({
@@ -12,7 +10,11 @@ const articleSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
-    imageUrl: String // Menyimpan URL gambar dari S3
+    imageUrl: String,
+    bookmarkedBy: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }]
 });
 
 const Article = mongoose.model('Article', articleSchema);
