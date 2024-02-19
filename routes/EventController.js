@@ -9,10 +9,34 @@ const storage = getCloudinaryStorage('events');
 const upload = multer({ storage });
 
 // Membuat event baru
+// router.post('/', userAuthenticate, upload.single('image'), async (req, res) => {
+//     try {
+//         const event = new Event({
+//             const event = new Event({
+//             ...req.body,
+//             imageUrl: req.file ? req.file.path : '',
+//         });
+//             imageUrl: req.file ? req.file.path : '',
+//         });
+//         await event.save();
+//         res.status(201).json(event);
+//     } catch (error) {
+//         res.status(500).json({ message: "Internal server error", error: error.toString() });
+//     }
+// });
 router.post('/', userAuthenticate, upload.single('image'), async (req, res) => {
     try {
+        const cleanContent = sanitizeHtml(req.body.content, {
+            allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2', 'h3', 'p', 'br', 'ul', 'ol', 'li', 'strong', 'em', 'blockquote', 'a']),
+            allowedAttributes: {
+                'a': ['href', 'name', 'target'],
+                'img': ['src']
+            },
+        });
+
         const event = new Event({
             ...req.body,
+            description: cleanContent,
             imageUrl: req.file ? req.file.path : '',
         });
         await event.save();
@@ -21,7 +45,6 @@ router.post('/', userAuthenticate, upload.single('image'), async (req, res) => {
         res.status(500).json({ message: "Internal server error", error: error.toString() });
     }
 });
-
 // Mendapatkan semua event
 router.get('/', async (req, res) => {
     try {
@@ -45,13 +68,37 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// Update event
+// // Update event
+// router.patch('/:id', userAuthenticate, upload.single('image'), async (req, res) => {
+//     const updates = req.body;
+//     if (req.file) {
+//         updates.imageUrl = req.file.path;
+//     }
+//     try {
+//         const event = await Event.findByIdAndUpdate(req.params.id, updates, { new: true });
+//         res.status(200).json(event);
+//     } catch (error) {
+//         res.status(500).json({ message: "Error updating event", error: error.toString() });
+//     }
+// });
 router.patch('/:id', userAuthenticate, upload.single('image'), async (req, res) => {
-    const updates = req.body;
-    if (req.file) {
-        updates.imageUrl = req.file.path;
-    }
     try {
+        const cleanContent = sanitizeHtml(req.body.content, {
+            allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2', 'h3', 'p', 'br', 'ul', 'ol', 'li', 'strong', 'em', 'blockquote', 'a']),
+            allowedAttributes: {
+                'a': ['href', 'name', 'target'],
+                'img': ['src']
+            },
+        });
+
+        const updates = {
+            ...req.body,
+            description: cleanContent
+        };
+        if (req.file) {
+            updates.imageUrl = req.file.path;
+        }
+
         const event = await Event.findByIdAndUpdate(req.params.id, updates, { new: true });
         res.status(200).json(event);
     } catch (error) {
