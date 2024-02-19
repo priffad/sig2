@@ -1,33 +1,18 @@
 const express = require('express');
 const multer = require('multer');
 const Event = require('../models/Event');
-const sanitizeHtml = require('sanitize-html');
 const { userAuthenticate } = require('../middleware/auth');
 const { getCloudinaryStorage } = require('../cloudinaryConfig');
+const sanitizeHtml = require('sanitize-html'); // Import sanitize-html
 
 const router = express.Router();
 const storage = getCloudinaryStorage('events');
 const upload = multer({ storage });
 
 // Membuat event baru
-// router.post('/', userAuthenticate, upload.single('image'), async (req, res) => {
-//     try {
-//         const event = new Event({
-//             const event = new Event({
-//             ...req.body,
-//             imageUrl: req.file ? req.file.path : '',
-//         });
-//             imageUrl: req.file ? req.file.path : '',
-//         });
-//         await event.save();
-//         res.status(201).json(event);
-//     } catch (error) {
-//         res.status(500).json({ message: "Internal server error", error: error.toString() });
-//     }
-// });
 router.post('/', userAuthenticate, upload.single('image'), async (req, res) => {
     try {
-        const cleanContent = sanitizeHtml(req.body.content, {
+        const cleanDescription = sanitizeHtml(req.body.description, {
             allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2', 'h3', 'p', 'br', 'ul', 'ol', 'li', 'strong', 'em', 'blockquote', 'a']),
             allowedAttributes: {
                 'a': ['href', 'name', 'target'],
@@ -37,7 +22,7 @@ router.post('/', userAuthenticate, upload.single('image'), async (req, res) => {
 
         const event = new Event({
             ...req.body,
-            description: cleanContent,
+            description: cleanDescription, // Gunakan cleanDescription
             imageUrl: req.file ? req.file.path : '',
         });
         await event.save();
@@ -46,6 +31,9 @@ router.post('/', userAuthenticate, upload.single('image'), async (req, res) => {
         res.status(500).json({ message: "Internal server error", error: error.toString() });
     }
 });
+
+
+
 // Mendapatkan semua event
 router.get('/', async (req, res) => {
     try {
@@ -69,22 +57,10 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// // Update event
-// router.patch('/:id', userAuthenticate, upload.single('image'), async (req, res) => {
-//     const updates = req.body;
-//     if (req.file) {
-//         updates.imageUrl = req.file.path;
-//     }
-//     try {
-//         const event = await Event.findByIdAndUpdate(req.params.id, updates, { new: true });
-//         res.status(200).json(event);
-//     } catch (error) {
-//         res.status(500).json({ message: "Error updating event", error: error.toString() });
-//     }
-// });
+// Update event 
 router.patch('/:id', userAuthenticate, upload.single('image'), async (req, res) => {
     try {
-        const cleanContent = sanitizeHtml(req.body.content, {
+        const cleanDescription = sanitizeHtml(req.body.description, {
             allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2', 'h3', 'p', 'br', 'ul', 'ol', 'li', 'strong', 'em', 'blockquote', 'a']),
             allowedAttributes: {
                 'a': ['href', 'name', 'target'],
@@ -94,8 +70,9 @@ router.patch('/:id', userAuthenticate, upload.single('image'), async (req, res) 
 
         const updates = {
             ...req.body,
-            description: cleanContent
+            description: cleanDescription, 
         };
+
         if (req.file) {
             updates.imageUrl = req.file.path;
         }
@@ -106,6 +83,7 @@ router.patch('/:id', userAuthenticate, upload.single('image'), async (req, res) 
         res.status(500).json({ message: "Error updating event", error: error.toString() });
     }
 });
+
 
 // Delete event
 router.delete('/:id', userAuthenticate, async (req, res) => {
