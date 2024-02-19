@@ -22,7 +22,6 @@ mongoose.connect(process.env.MONGO_URI, {
   useUnifiedTopology: true,
 });
 
-// Once connected to the DB, initialize our gfs instance
 let gfs;
 const conn = mongoose.connection;
 conn.once('open', () => {
