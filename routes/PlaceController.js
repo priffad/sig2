@@ -68,6 +68,10 @@ router.get('/most-reviewed', async (req, res) => {
             },
             {
                 $sort: { numberOfReviews: -1 } 
+              
+            },
+            {
+                $limit: 5 
             }
         ]);
         res.json(mostReviewedPlaces);
