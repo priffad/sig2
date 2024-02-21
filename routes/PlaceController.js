@@ -50,6 +50,33 @@ router.get('/top-liked-places', async (req, res) => {
 });
 
 
+router.get('/most-reviewed', async (req, res) => {
+    try {
+        const mostReviewedPlaces = await Place.aggregate([
+            {
+                $lookup: {
+                    from: "reviews", 
+                    localField: "_id", 
+                    foreignField: "place", 
+                    as: "reviews" 
+                }
+            },
+            {
+                $addFields: {
+                    numberOfReviews: { $size: "$reviews" } 
+                }
+            },
+            {
+                $sort: { numberOfReviews: -1 } 
+            }
+        ]);
+        res.json(mostReviewedPlaces);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error fetching most reviewed places", error: error.toString() });
+    }
+});
+
 router.get('/:id', async (req, res) => {
     try {
         const place = await Place.findById(req.params.id);
