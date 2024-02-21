@@ -43,4 +43,31 @@ router.post('/login', async (req, res) => {
       res.status(500).send(error);
     }
   });
+
+  app.get('/register/last-7-days', async (req, res) => {
+    const today = new Date();
+    const last7Days = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7);
+
+    try {
+        const registrations = await User.aggregate([
+            { $match: { createdAt: { $gte: last7Days } } },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                    count: { $sum: 1 }
+                }
+            },
+            { $sort: { "_id": 1 } }
+        ]);
+
+        res.status(200).send(registrations);
+    } catch (error) {
+        res.status(500).send({ error: error.message });
+    }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
 module.exports = router;
