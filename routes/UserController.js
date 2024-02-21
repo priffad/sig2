@@ -44,7 +44,7 @@ router.post('/login', async (req, res) => {
     }
   });
 
-  app.get('/register/last-7-days', async (req, res) => {
+router.get('/register/last-7-days', async (req, res) => {
     const today = new Date();
     const last7Days = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7);
 
@@ -66,8 +66,4 @@ router.post('/login', async (req, res) => {
     }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
 module.exports = router;
