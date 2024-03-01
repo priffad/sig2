@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const Place = require('../models/Place');
+const Category = require('../models/Category');
 const { userAuthenticate } = require('../middleware/auth');
 const { getCloudinaryStorage, cloudinary } = require('../cloudinaryConfig');
 
@@ -31,12 +32,22 @@ router.post('/', userAuthenticate, upload.array('images', 4), async (req, res) =
 router.get('/', async (req, res) => {
     try {
         const places = await Place.find({});
-        res.json(places);
+        const placesWithCategoryNames = await Promise.all(places.map(async (place) => {
+            const category = await Category.findById(place.category);
+            return {
+                ...place.toObject(),
+                category: category ? category.name : "Uncategorized"
+            };
+        }));
+        res.json(placesWithCategoryNames);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Error fetching places", error: error.toString() });
     }
 });
+
+
+
 router.get('/top-liked-places', async (req, res) => {
     try {
         const topLikedPlaces = await Place.find()
@@ -81,18 +92,30 @@ router.get('/most-reviewed', async (req, res) => {
     }
 });
 
+// Mendapatkan tempat berdasarkan ID
 router.get('/:id', async (req, res) => {
     try {
         const place = await Place.findById(req.params.id);
         if (!place) {
             return res.status(404).json({ message: 'Place not found' });
         }
-        res.json(place);
+
+      
+        const category = await Category.findById(place.category);
+
+    
+        const placeWithCategoryName = {
+            ...place.toObject(),
+            category: category ? category.name : "Uncategorized"
+        };
+
+        res.json(placeWithCategoryName);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Error fetching place", error: error.toString() });
     }
 });
+
 
 
 router.get('/liked-by/:userId', userAuthenticate, async (req, res) => {
