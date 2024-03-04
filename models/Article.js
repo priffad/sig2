@@ -5,7 +5,10 @@ const articleSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    content: String,
+    content: {
+        type :String,
+        required: true
+    },
     date: {
         type: Date,
         default: Date.now
