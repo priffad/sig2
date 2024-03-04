@@ -36,13 +36,13 @@ router.post('/login', async (req, res) => {
           return res.status(400).send({ error: 'Invalid login credentials' });
       }
       const token = jwt.sign({ _id: user._id }, process.env.SECRET_KEY);
-  
-    
-      res.send({ token: token, userId: user._id }); // Mengembalikan token dan userId
+      
+      res.send({ token: token, userId: user._id, username: user.username }); // Modifikasi di sini
     } catch (error) {
       res.status(500).send(error);
     }
   });
+
 
 router.get('/register/last-7-days', async (req, res) => {
     const today = new Date();
