@@ -28,7 +28,7 @@ router.post('/', userAuthenticate, upload.array('images', 4), async (req, res) =
     }
 });
 
-// Mendapatkan semua tempat
+
 router.get('/', async (req, res) => {
     try {
         const places = await Place.find({});
@@ -92,7 +92,6 @@ router.get('/most-reviewed', async (req, res) => {
     }
 });
 
-// Mendapatkan tempat berdasarkan ID
 router.get('/:id', async (req, res) => {
     try {
         const place = await Place.findById(req.params.id);
@@ -173,8 +172,6 @@ router.patch('/:id', userAuthenticate, upload.array('newImages'), async (req, re
 });
 
 
-
-// Like atau unlike tempat
 router.patch('/:placeId/like', userAuthenticate, async (req, res) => {
     try {
         const place = await Place.findById(req.params.placeId);
@@ -199,12 +196,11 @@ router.patch('/:placeId/like', userAuthenticate, async (req, res) => {
     }
 });
 
-// Menghapus tempat
+
 router.delete('/:id', userAuthenticate, async (req, res) => {
     try {
         const place = await Place.findByIdAndDelete(req.params.id);
         if (place && place.images.length) {
-            // Hapus gambar dari Cloudinary
             place.images.forEach(async image => {
                 await cloudinary.uploader.destroy(image.public_id);
             });

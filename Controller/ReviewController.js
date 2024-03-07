@@ -19,7 +19,7 @@ router.get('/place/:placeId', async (req, res) => {
             });
         } else {
             res.send({
-                message: "No reviews available for this place.",
+                message: "No reviews",
                 averageRating: "N/A"
             });
         }
@@ -62,14 +62,12 @@ router.delete('/place/:placeId/review/:reviewId', userAuthenticate, async (req, 
         const reviewId = req.params.reviewId;
         const userId = req.user._id;
 
-        // Cari review berdasarkan reviewId dan userId untuk memastikan hanya pengguna yang membuat review yang bisa menghapus
         const review = await Review.findOne({ _id: reviewId, user: userId });
 
         if (!review) {
             return res.status(404).send({ message: 'Review not found or user not authorized to delete this review' });
         }
 
-        // Menghapus review
         await Review.findByIdAndDelete(reviewId);
 
         res.send({ message: 'Review successfully deleted' });

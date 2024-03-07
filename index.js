@@ -16,7 +16,7 @@ app.use(cors({
   credentials: true,
 }));
 
-// Connect to MongoDB
+
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -30,7 +30,7 @@ conn.once('open', () => {
   console.log("Connected to MongoDB");
 });
 
-// Import routes
+
 const userRoutes = require('./Controller/UserController');
 const adminRoutes = require('./Controller/AdminController');
 const categoryRoutes = require('./Controller/CategoryController');
@@ -40,7 +40,6 @@ const articleRoutes = require('./Controller/ArticleController');
 const eventRoutes = require('./Controller/EventController');
 const sliderRoutes = require('./Controller/SliderController');
 
-// Use routes
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/categories', categoryRoutes);
@@ -50,7 +49,6 @@ app.use('/api/events', eventRoutes);
 app.use('/api/articles', articleRoutes);
 app.use('/api/sliders', sliderRoutes);
 
-// Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

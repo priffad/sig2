@@ -9,7 +9,6 @@ const router = express.Router();
 const storage = getCloudinaryStorage('articles');
 const upload = multer({ storage });
 
-// Membuat artikel baru
 router.post('/', userAuthenticate, upload.single('image'), async (req, res) => {
     try {
         const cleanContent = sanitizeHtml(req.body.content, {
@@ -32,7 +31,6 @@ router.post('/', userAuthenticate, upload.single('image'), async (req, res) => {
     }
 });
 
-// Mendapatkan semua artikel
 router.get('/', async (req, res) => {
     try {
         const articles = await Article.find({});
@@ -42,7 +40,6 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Mendapatkan artikel berdasarkan ID
 router.get('/:id', async (req, res) => {
     try {
         const article = await Article.findById(req.params.id);
@@ -55,7 +52,6 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// Update artikel
 router.patch('/:id', userAuthenticate, upload.single('image'), async (req, res) => {
     try {
         const cleanContent = sanitizeHtml(req.body.content, {
@@ -81,8 +77,6 @@ router.patch('/:id', userAuthenticate, upload.single('image'), async (req, res) 
     }
 });
 
-
-// Delete artikel
 router.delete('/:id', userAuthenticate, async (req, res) => {
     try {
         await Article.findByIdAndDelete(req.params.id);
@@ -92,7 +86,6 @@ router.delete('/:id', userAuthenticate, async (req, res) => {
     }
 });
 
-// Mendapatkan artikel yang dibookmark oleh pengguna
 router.get('/bookmarkedArticles/:userId', userAuthenticate, async (req, res) => {
     const { userId } = req.params;
     try {
@@ -103,7 +96,7 @@ router.get('/bookmarkedArticles/:userId', userAuthenticate, async (req, res) => 
     }
 });
 
-// Bookmark atau unbookmark artikel
+
 router.patch('/bookmark/:articleId', userAuthenticate, async (req, res) => {
     const { articleId } = req.params;
     const userId = req.user._id; 

@@ -3,13 +3,13 @@ const multer = require('multer');
 const Event = require('../models/Event');
 const { userAuthenticate } = require('../middleware/auth');
 const { getCloudinaryStorage } = require('../cloudinaryConfig');
-const sanitizeHtml = require('sanitize-html'); // Import sanitize-html
+const sanitizeHtml = require('sanitize-html'); 
 
 const router = express.Router();
 const storage = getCloudinaryStorage('events');
 const upload = multer({ storage });
 
-// Membuat event baru
+
 router.post('/', userAuthenticate, upload.single('image'), async (req, res) => {
     try {
         const cleanDescription = sanitizeHtml(req.body.description, {
@@ -22,7 +22,7 @@ router.post('/', userAuthenticate, upload.single('image'), async (req, res) => {
 
         const event = new Event({
             ...req.body,
-            description: cleanDescription, // Gunakan cleanDescription
+            description: cleanDescription, 
             imageUrl: req.file ? req.file.path : '',
         });
         await event.save();
@@ -32,9 +32,6 @@ router.post('/', userAuthenticate, upload.single('image'), async (req, res) => {
     }
 });
 
-
-
-// Mendapatkan semua event
 router.get('/', async (req, res) => {
     try {
         const events = await Event.find({});
@@ -44,7 +41,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Mendapatkan event berdasarkan ID
+
 router.get('/:id', async (req, res) => {
     try {
         const event = await Event.findById(req.params.id);
@@ -57,7 +54,6 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// Update event 
 router.patch('/:id', userAuthenticate, upload.single('image'), async (req, res) => {
     try {
         const cleanDescription = sanitizeHtml(req.body.description, {
@@ -85,7 +81,6 @@ router.patch('/:id', userAuthenticate, upload.single('image'), async (req, res) 
 });
 
 
-// Delete event
 router.delete('/:id', userAuthenticate, async (req, res) => {
     try {
         await Event.findByIdAndDelete(req.params.id);
@@ -95,7 +90,6 @@ router.delete('/:id', userAuthenticate, async (req, res) => {
     }
 });
 
-// Mendapatkan event yang dibookmark oleh pengguna
 router.get('/bookmarkedEvents/:userId', userAuthenticate, async (req, res) => {
     const { userId } = req.params;
     try {
@@ -106,7 +100,7 @@ router.get('/bookmarkedEvents/:userId', userAuthenticate, async (req, res) => {
     }
 });
 
-// Bookmark atau unbookmark event
+
 router.patch('/bookmark/:eventId', userAuthenticate, async (req, res) => {
     const { eventId } = req.params;
     const userId = req.user._id; // 

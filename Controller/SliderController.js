@@ -5,7 +5,7 @@ const { userAuthenticate } = require('../middleware/auth');
 const { getCloudinaryStorage, cloudinary } = require('../cloudinaryConfig');
 
 const router = express.Router();
-const storage = getCloudinaryStorage('slider_images'); // Use Cloudinary storage with a specific folder name
+const storage = getCloudinaryStorage('slider_images'); 
 const upload = multer({ storage: storage });
 
 router.post('/', userAuthenticate, upload.single('image'), async (req, res) => {
