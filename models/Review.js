@@ -13,6 +13,12 @@ const reviewSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Place',
         required: true
+    },
+    rating: { 
+        type: Number,
+        required: true,
+        min: 1, 
+        max: 5 
     }
 });
 

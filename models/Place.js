@@ -5,8 +5,7 @@ const placeSchema = new mongoose.Schema({
     category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: true },
     description: String,
     address: String,
-    images: [{ url: String, public_id: String }], // Simpan URL dan public_id dari Cloudinary
-    lat: Number,
+    images: [{ url: String, public_id: String }], 
     lng: Number,
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
 });
