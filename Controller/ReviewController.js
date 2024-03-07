@@ -48,6 +48,7 @@ router.post('/place/:placeId', userAuthenticate, async (req, res) => {
             ...req.body, 
             place: req.params.placeId,
             name: user.username 
+            user: req.user._id
         });
 
         await review.save();
