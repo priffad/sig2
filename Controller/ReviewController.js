@@ -59,27 +59,25 @@ router.post('/place/:placeId', userAuthenticate, async (req, res) => {
 });
 router.delete('/place/:placeId/review/:reviewId', userAuthenticate, async (req, res) => {
     try {
-        console.log('Finding review with ID:', req.params.reviewId);
-        const review = await Review.findById(req.params.reviewId);
-        console.log('Review found:', review);
-    
+        const reviewId = req.params.reviewId;
+        const userId = req.user._id;
+
+        // Cari review berdasarkan reviewId dan userId untuk memastikan hanya pengguna yang membuat review yang bisa menghapus
+        const review = await Review.findOne({ _id: reviewId, user: userId });
+
         if (!review) {
-            return res.status(404).send('Review not found');
+            return res.status(404).send({ message: 'Review not found or user not authorized to delete this review' });
         }
-    
-        console.log('Checking user authorization for:', req.user._id);
-        if (review.user.toString() !== req.user._id.toString()) {
-            return res.status(403).send('User is not authorized to delete this review');
-        }
-    
-        console.log('Deleting review:', review._id);
-        await review.remove();
+
+        // Menghapus review
+        await Review.findByIdAndDelete(reviewId);
+
         res.send({ message: 'Review successfully deleted' });
     } catch (error) {
         console.error('Error during review deletion:', error);
-        res.status(500).send(error);
+        res.status(500).send({ message: 'An error occurred while deleting the review', error: error.toString() });
     }
-    
 });
+
 
 module.exports = router;
