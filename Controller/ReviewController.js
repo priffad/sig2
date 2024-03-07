@@ -47,7 +47,7 @@ router.post('/place/:placeId', userAuthenticate, async (req, res) => {
         const review = new Review({
             ...req.body, 
             place: req.params.placeId,
-            name: user.username 
+            name: user.username ,
             user: req.user._id
         });
 
