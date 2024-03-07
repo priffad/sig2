@@ -6,10 +6,23 @@ const { userAuthenticate } = require('../middleware/auth');
 
 const router = express.Router();
 
+
 router.get('/place/:placeId', async (req, res) => {
     try {
-        const reviews = await Review.find({ place: req.params.placeId });
-        res.send(reviews);
+      
+        const reviews = await Review.find({ place: req.params.placeId });     
+        if(reviews.length > 0) {
+            const averageRating = reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length;
+            res.send({
+                reviews,
+                averageRating: averageRating.toFixed(2) 
+            });
+        } else {
+            res.send({
+                message: "No reviews available for this place.",
+                averageRating: "N/A"
+            });
+        }
     } catch (error) {
         res.status(500).send(error);
     }
@@ -26,7 +39,6 @@ router.post('/place/:placeId', userAuthenticate, async (req, res) => {
             return res.status(400).send('Rating is required');
         }
 
-       
         const rating = parseInt(req.body.rating, 10);
         if (isNaN(rating) || rating < 1 || rating > 5) {
             return res.status(400).send('Invalid rating value. Rating must be between 1 and 5.');
