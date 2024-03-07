@@ -58,20 +58,27 @@ router.post('/place/:placeId', userAuthenticate, async (req, res) => {
 });
 router.delete('/place/:placeId/review/:reviewId', userAuthenticate, async (req, res) => {
     try {
+        console.log('Finding review with ID:', req.params.reviewId);
         const review = await Review.findById(req.params.reviewId);
+        console.log('Review found:', review);
+    
         if (!review) {
             return res.status(404).send('Review not found');
         }
-
+    
+        console.log('Checking user authorization for:', req.user._id);
         if (review.user.toString() !== req.user._id.toString()) {
             return res.status(403).send('User is not authorized to delete this review');
         }
-
+    
+        console.log('Deleting review:', review._id);
         await review.remove();
         res.send({ message: 'Review successfully deleted' });
     } catch (error) {
+        console.error('Error during review deletion:', error);
         res.status(500).send(error);
     }
+    
 });
 
 module.exports = router;
