@@ -2,7 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const Grid = require('gridfs-stream');
+// const Grid = require('gridfs-stream');
 const dotenv = require('dotenv');
 
 dotenv.config();
@@ -22,13 +22,13 @@ mongoose.connect(process.env.MONGO_URI, {
   useUnifiedTopology: true,
 });
 
-let gfs;
-const conn = mongoose.connection;
-conn.once('open', () => {
-  gfs = Grid(conn.db, mongoose.mongo);
-  gfs.collection('uploads');
-  console.log("Connected to MongoDB");
-});
+// let gfs;
+// const conn = mongoose.connection;
+// conn.once('open', () => {
+//   gfs = Grid(conn.db, mongoose.mongo);
+//   gfs.collection('uploads');
+//   console.log("Connected to MongoDB");
+// });
 
 
 const userRoutes = require('./Controller/UserController');

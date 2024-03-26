@@ -5,7 +5,8 @@ const placeSchema = new mongoose.Schema({
     category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: true },
     description: String,
     address: String,
-    images: [{ url: String, public_id: String }], 
+    images: [{ url: String, public_id: String }],
+    lat: Number,
     lng: Number,
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
 });
