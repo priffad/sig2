@@ -50,15 +50,26 @@ router.get('/', async (req, res) => {
 
 router.get('/top-liked-places', async (req, res) => {
     try {
-        const topLikedPlaces = await Place.find()
-            .sort({ likes: -1 })
-            .limit(5);
+        const topLikedPlaces = await Place.aggregate([
+            {
+                $addFields: {
+                    numberOfLikes: { $size: "$likes" }
+                }
+            },
+            {
+                $sort: { numberOfLikes: -1 }
+            },
+            {
+                $limit: 5
+            }
+        ]);
         res.send(topLikedPlaces);
     } catch (error) {
         console.error(error);
         res.status(500).send({ message: "Error fetching top liked places", error: error.message });
     }
 });
+
 
 
 router.get('/most-reviewed', async (req, res) => {
